@@ -29,7 +29,10 @@ import Testing
     }
 
     private func application(
-        _ status: Status, lastContact daysAgo: Int, atHour hour: Int = 12
+        _ status: Status,
+        lastContact daysAgo: Int,
+        atHour hour: Int = 12,
+        appliedDaysAgo: Int? = nil
     ) throws -> Application {
         let container = try ModelContainer(
             for: Schema(JobTrackerCore.models),
@@ -40,7 +43,7 @@ import Testing
             companyNamed: "Spotify",
             title: "iOS Engineer",
             status: status,
-            appliedDate: date(daysAgo),
+            appliedDate: date(appliedDaysAgo ?? daysAgo),
             lastContactDate: date(daysAgo, atHour: hour),
             in: context
         )
@@ -132,6 +135,35 @@ import Testing
         #expect(lateYesterday.daysOfSilence(asOf: earlyThisMorning, in: calendar) == 1)
     }
 
+    /// Spanning a spring-forward loses an hour of elapsed time. Counting
+    /// elapsed intervals would report 10 days here and call the Application
+    /// fresh; calendar days report 11 and call it Stale. This is the exact
+    /// deviation ADR 0001 says a future reader is most likely to introduce.
+    @Test func isUnaffectedByADaylightSavingTransition() throws {
+        let container = try ModelContainer(
+            for: Schema(JobTrackerCore.models),
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        // Europe/London moves to BST on 29 March 2026.
+        let beforeTheClockChange = calendar.date(
+            from: DateComponents(year: 2026, month: 3, day: 25, hour: 12))!
+        let afterTheClockChange = calendar.date(
+            from: DateComponents(year: 2026, month: 4, day: 5, hour: 12))!
+        let application = try Application.create(
+            companyNamed: "Spotify",
+            title: "iOS Engineer",
+            status: .interviewing,
+            appliedDate: beforeTheClockChange,
+            lastContactDate: beforeTheClockChange,
+            in: context
+        )
+
+        #expect(
+            application.daysOfSilence(asOf: afterTheClockChange, in: calendar) == 11)
+        #expect(application.isStale(asOf: afterTheClockChange, in: calendar))
+    }
+
     @Test func countsTodayAsNoSilenceAtAll() throws {
         let contactedToday = try application(.applied, lastContact: 0, atHour: 8)
 
@@ -144,19 +176,8 @@ import Testing
     /// The spec's failure case: "A company that interviewed me yesterday must
     /// never read as stale because I applied 60 days ago."
     @Test func measuresFromTheLastContactNotTheAppliedDate() throws {
-        let container = try ModelContainer(
-            for: Schema(JobTrackerCore.models),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let context = ModelContext(container)
-        let application = try Application.create(
-            companyNamed: "Spotify",
-            title: "iOS Engineer",
-            status: .interviewing,
-            appliedDate: date(60),
-            lastContactDate: date(1),
-            in: context
-        )
+        let application = try application(
+            .interviewing, lastContact: 1, appliedDaysAgo: 60)
 
         #expect(!application.isStale(asOf: now, in: calendar))
         #expect(application.daysOfSilence(asOf: now, in: calendar) == 1)

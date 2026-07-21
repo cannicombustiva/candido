@@ -50,10 +50,4 @@ extension Application {
         guard let threshold = status.stalenessThreshold else { return false }
         return daysOfSilence(asOf: now, in: calendar) > threshold
     }
-
-    /// Staleness as of right now, in the owner's own timezone. What the table
-    /// renders from.
-    public var isStale: Bool {
-        isStale()
-    }
 }
