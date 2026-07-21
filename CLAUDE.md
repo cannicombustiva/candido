@@ -79,6 +79,22 @@ as skipped — do not claim the UI was visually verified.
 Filter `xcodebuild` output; it is extremely verbose. `grep -E "error:|BUILD"` is
 usually enough.
 
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub issues, managed with the `gh` CLI. No git remote exists yet, so
+`gh` will fail until the repo is pushed. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical label names, unchanged (`needs-triage`, `needs-info`, `ready-for-agent`,
+`ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
 ## Toolchain
 
 Swift 6.3, Xcode 26.6, macOS 26 (arm64). Tests use `swift-testing`
