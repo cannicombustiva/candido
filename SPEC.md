@@ -166,12 +166,12 @@ held roughly constant as backdrop.
 | --- | --- | --- |
 | M0 | **One-shot, unattended.** Whole spec, throwaway branch, walk away | Control group. Whatever it gets wrong is what the process must fix |
 | M1 | `/grill-me` → spec | This document ✅ |
-| M2 | Plan mode + `/to-issues` | Spec becomes grabbable issues |
+| M2 | Plan mode + `/to-tickets` | Spec becomes grabbable issues |
 | M3 | `/tdd` red-green on the domain package | `JobTrackerCore`, tested. **App in daily real use from here** |
 | M4 | Parallel subagents, independent tracks | Export mirror ‖ `MenuBarExtra` |
 | M5 | `/code-review` + `/security-review` | Does the reviewer catch what I can't? |
 | M6 | `/loop` or scheduled agent | Background maintenance, dependency bumps |
-| M7 | `/write-a-skill` | Encode whatever motion I kept repeating |
+| M7 | `/writing-great-skills` | Encode whatever motion I kept repeating |
 
 M0 runs **first**, before any structure exists. Without a control group I will
 never know whether the ceremony bought anything.
