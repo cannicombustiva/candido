@@ -32,3 +32,11 @@ targets:
         CODE_SIGNING_REQUIRED: YES
         CODE_SIGNING_ALLOWED: YES
         SWIFT_VERSION: "6.0"
+      configs:
+        # A sandboxed app's container is keyed by its bundle identifier, so a
+        # Debug build sharing the release identifier would open — and migrate —
+        # the real store. Debug gets its own identifier, and therefore its own
+        # container: agent runs cannot touch the owner's tracked applications.
+        Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: com.candido.JobTracker.dev
+          INFOPLIST_KEY_CFBundleDisplayName: JobTracker (Dev)

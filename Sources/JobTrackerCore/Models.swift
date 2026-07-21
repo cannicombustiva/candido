@@ -63,6 +63,10 @@ public final class Application {
     public var appliedDate: Date
 
     /// Resets whenever either side makes contact. Drives staleness.
+    ///
+    /// Defaults to `appliedDate` rather than today: sending an application
+    /// *is* the last contact, and a row backdated on import must not read as
+    /// freshly contacted just because it was constructed today.
     public var lastContactDate: Date
 
     public var jobURL: URL?
@@ -74,7 +78,7 @@ public final class Application {
         title: String,
         status: Status = .applied,
         appliedDate: Date = Date(),
-        lastContactDate: Date = Date(),
+        lastContactDate: Date? = nil,
         jobURL: URL? = nil,
         notes: String = ""
     ) {
@@ -83,7 +87,7 @@ public final class Application {
         self.title = title
         self.status = status
         self.appliedDate = appliedDate
-        self.lastContactDate = lastContactDate
+        self.lastContactDate = lastContactDate ?? appliedDate
         self.jobURL = jobURL
         self.notes = notes
     }

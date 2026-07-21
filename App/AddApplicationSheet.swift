@@ -18,8 +18,7 @@ struct AddApplicationSheet: View {
     @State private var failure: String?
 
     private var canSave: Bool {
-        !companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        Application.canCreate(companyName: companyName, title: title)
     }
 
     var body: some View {

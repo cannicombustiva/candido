@@ -1,10 +1,25 @@
 import Foundation
 import SwiftData
 
-public enum CompanyNameError: Error, Equatable {
+/// What the add sheet can get wrong.
+///
+/// These are decisions, so they live here rather than in the view: the view
+/// asks `Application.canCreate` whether to enable its button, and `create`
+/// enforces the same rules on the way in.
+public enum ApplicationInputError: Error, Equatable {
     /// A Company name has to have something in it — a name of only spaces
     /// would fold to "" and collide with every other empty name.
-    case blank
+    case blankCompanyName
+
+    /// An Application with no title is a row the owner cannot identify.
+    case blankTitle
+}
+
+extension String {
+    /// Surrounding whitespace is never meaningful in anything the owner types.
+    var trimmed: String {
+        trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 extension Company {
@@ -14,8 +29,8 @@ extension Company {
     /// Interior spacing is deliberately left alone — `"Some Company"` and
     /// `"SomeCompany"` are two different names.
     static func normalize(_ name: String) throws -> String {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { throw CompanyNameError.blank }
+        let trimmed = name.trimmed
+        guard !trimmed.isEmpty else { throw ApplicationInputError.blankCompanyName }
         return trimmed.lowercased()
     }
 
@@ -39,18 +54,26 @@ extension Company {
             return existing
         }
 
-        let company = Company(
-            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-            normalizedName: normalized
-        )
+        let company = Company(name: name.trimmed, normalizedName: normalized)
         context.insert(company)
         return company
     }
 }
 
 extension Application {
+    /// Whether these two typed strings are enough to make an Application. The
+    /// add sheet enables its button on this, so the rule the button obeys and
+    /// the rule `create` enforces are the same rule.
+    public static func canCreate(companyName: String, title: String) -> Bool {
+        !companyName.trimmed.isEmpty && !title.trimmed.isEmpty
+    }
+
     /// Adds an Application, attaching it to the Company that name refers to —
     /// creating that Company if the name is new.
+    ///
+    /// `lastContactDate` defaults to the applied date, never to today: an
+    /// application sent 60 days ago has been silent for 60 days unless the
+    /// caller says otherwise.
     @discardableResult
     public static func create(
         companyNamed companyName: String,
@@ -62,13 +85,16 @@ extension Application {
         notes: String = "",
         in context: ModelContext
     ) throws -> Application {
+        let trimmedTitle = title.trimmed
+        guard !trimmedTitle.isEmpty else { throw ApplicationInputError.blankTitle }
+
         let company = try Company.findOrCreate(named: companyName, in: context)
         let application = Application(
             company: company,
-            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            title: trimmedTitle,
             status: status,
             appliedDate: appliedDate,
-            lastContactDate: lastContactDate ?? appliedDate,
+            lastContactDate: lastContactDate,
             jobURL: jobURL,
             notes: notes
         )

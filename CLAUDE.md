@@ -71,6 +71,14 @@ screencapture -x -T 3 shot.png
 osascript -e 'tell application "JobTracker" to quit'
 ```
 
+The Debug build has its own bundle identifier, `com.candido.JobTracker.dev`,
+and therefore its own sandbox container. The owner runs a Release build with
+their real applications in it; an agent run must never open that store. Do not
+"fix" the identifiers to match. Activate the app before capturing
+(`osascript -e 'tell application id "com.candido.JobTracker.dev" to activate'`)
+— `screencapture` only sees the active Space, so a fullscreen terminal hides
+the app window.
+
 `screencapture` fails with `could not create image from display` unless the
 terminal running it has **Screen Recording** permission (System Settings ▸
 Privacy & Security ▸ Screen Recording). If it fails, say so and report the step
