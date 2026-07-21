@@ -29,6 +29,12 @@ Status allows. A property of the present moment only — never recorded, never
 historical.
 _Avoid_: Ghosted, overdue, cold, dormant
 
+**Days of silence**:
+The count of calendar days, in the owner's local timezone, between the last
+contact and today. Not elapsed hours — time of day never affects whether an
+Application is Stale.
+_Avoid_: Age, elapsed time, days old
+
 **Awaits their reply**:
 The property of a Status meaning the next move belongs to the company, not the
 owner. Only such Applications can be Stale.

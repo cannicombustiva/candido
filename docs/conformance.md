@@ -29,9 +29,12 @@ pass.
 
 ### Staleness thresholds (`SPEC.md:90-100`)
 
-The boundary is strict: `> threshold`, not `>=`.
+The boundary is strict: `> threshold`, not `>=`. "Days" means **calendar days in
+the local timezone**, not elapsed 24-hour intervals (`SPEC.md`, ADR-0001) — so
+set the time component to something awkward when checking these, and the answers
+must not move.
 
-| # | Status | Days since `lastContactDate` | Expected |
+| # | Status | Calendar days since `lastContactDate` | Expected |
 | --- | --- | --- | --- |
 | D1 | `applied` | 20 | not stale |
 | D2 | `applied` | 21 | **not stale** (boundary) |
@@ -49,6 +52,8 @@ The boundary is strict: `> threshold`, not `>=`.
 | # | Scenario | Expected |
 | --- | --- | --- |
 | D11 | `applied` 60 days ago, contacted yesterday | not stale — clock runs from `lastContactDate`, not `appliedDate` |
+| D11a | `applied`, contact at 23:00 on day −22, evaluated at 08:00 today | stale — 22 calendar days, despite fewer than 22 elapsed 24-hour intervals |
+| D11b | Two `applied` rows, contact same day at 09:00 and 22:00 | both flip to stale on the same day |
 | D12 | `appliedDate` after creation | unchanged — set once, never changes (`SPEC.md:60`) |
 
 ### Staleness is derived (`SPEC.md:78-80`, `SPEC.md:105`)

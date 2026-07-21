@@ -99,6 +99,11 @@ silence after applying.
 **Boundary is strict.** `> threshold`, not `>=`. At exactly 21 days an `applied`
 row is *not* stale. At 22 days it is.
 
+**Days are calendar days in the local timezone**, not elapsed 24-hour intervals.
+Rows turn stale at local midnight. Time of day is not part of the decision — two
+applications sent on the same day go stale on the same day, whether one was sent
+at 09:00 and the other at 22:00. See `docs/adr/0001-calendar-days-for-staleness.md`.
+
 Clock runs from `lastContactDate`, not `appliedDate`. A company that interviewed
 me yesterday must never read as stale because I applied 60 days ago.
 
