@@ -144,6 +144,28 @@ Drive and it syncs for free.
   README says so in these words. Claiming "sync" and shipping a one-way mirror
   is the kind of thing an interviewer catches.
 
+### Import merges. It never deletes.
+
+Importing into a store that already holds data:
+
+- Applications match on their stable id. A **known id is updated in place** from
+  the file; an **unknown id is inserted**.
+- A row in the store that the file does not mention is **left alone**. Import
+  never deletes anything.
+- Companies resolve through the same case- and whitespace-insensitive
+  find-or-create the add sheet uses, so `"spotify"` in a file joins the existing
+  `"Spotify"`.
+- Re-importing the same file twice therefore changes nothing.
+
+The consequence is deliberate and I accept it: an application I deleted comes
+back if I import a file written before I deleted it, and the store can only ever
+grow by importing. That is the price of an import that can never lose work, and
+losing work is the failure I care about. A row that reappears is an annoyance I
+can fix in two clicks; a row destroyed by a mis-click on `Import…` is gone.
+
+This makes import a merge, not a restore. Restoring a machine to an exact
+snapshot is not a thing this app does.
+
 Round-trip is unit-tested: export → import → identical dataset.
 
 ## Verification
