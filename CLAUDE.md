@@ -29,13 +29,17 @@ checking your diff line by line. That means:
 Package.swift              JobTrackerCore package manifest
 Sources/JobTrackerCore/    Domain: models, staleness, find-or-create, JSON codec
 Tests/JobTrackerCoreTests/ swift-testing tests for the above
+App/                       SwiftUI app target sources + entitlements
+project.yml                xcodegen spec — source of truth for the app target
 SPEC.md                    The contract
 ```
 
-The app target (Xcode project, SwiftUI views, entitlements) does not exist yet.
-`xcodegen` and `tuist` are **not** installed — creating it means either an
-Xcode-generated project or adding a generator as a dependency. Raise this rather
-than hand-writing a `.pbxproj`.
+`JobTracker.xcodeproj` is **generated and gitignored**. Never edit it, and never
+hand-edit a `.pbxproj`. To change build settings, targets, or add source
+directories, edit `project.yml` and re-run `xcodegen generate`.
+
+The app is sandboxed with `user-selected.read-write` and `bookmarks.app-scope`
+entitlements — the set the JSON backup mirror in `SPEC.md` needs.
 
 ## Rule: logic goes in the package, not the views
 
@@ -55,6 +59,25 @@ Before reporting work as done:
    per-status thresholds and the strict `>` boundary.
 
 Report failures plainly, with output. A skipped step must be named as skipped.
+
+### Build, launch, screenshot
+
+```bash
+xcodegen generate
+xcodebuild -project JobTracker.xcodeproj -scheme JobTracker \
+  -configuration Debug -derivedDataPath DerivedData build
+open DerivedData/Build/Products/Debug/JobTracker.app
+screencapture -x -T 3 shot.png
+osascript -e 'tell application "JobTracker" to quit'
+```
+
+`screencapture` fails with `could not create image from display` unless the
+terminal running it has **Screen Recording** permission (System Settings ▸
+Privacy & Security ▸ Screen Recording). If it fails, say so and report the step
+as skipped — do not claim the UI was visually verified.
+
+Filter `xcodebuild` output; it is extremely verbose. `grep -E "error:|BUILD"` is
+usually enough.
 
 ## Toolchain
 

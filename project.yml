@@ -1,0 +1,34 @@
+name: JobTracker
+
+options:
+  bundleIdPrefix: com.candido
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+
+packages:
+  JobTrackerCore:
+    path: .
+
+targets:
+  JobTracker:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+    dependencies:
+      - package: JobTrackerCore
+        product: JobTrackerCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.candido.JobTracker
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: App/JobTracker.entitlements
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGNING_REQUIRED: YES
+        CODE_SIGNING_ALLOWED: YES
+        SWIFT_VERSION: "6.0"
