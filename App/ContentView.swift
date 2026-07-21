@@ -56,6 +56,21 @@ private struct FilterSidebar: View {
     }
 }
 
+/// The last-contact date, styled when the Application has gone quiet for
+/// longer than its Status allows.
+///
+/// Stale rows are styled, never hidden: hiding them would let the owner
+/// forget those companies exist.
+private struct LastContactCell: View {
+    let application: Application
+
+    var body: some View {
+        Text(application.lastContactDate, format: .dateTime.day().month(.abbreviated).year())
+            .foregroundStyle(
+                application.isStale() ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
+    }
+}
+
 private struct ApplicationTable: View {
     let applications: [Application]
     @Binding var sortOrder: [ApplicationComparator]
@@ -77,8 +92,8 @@ private struct ApplicationTable: View {
             }
             TableColumn(
                 "Last contact", sortUsing: ApplicationSortField.lastContactDate.comparator()
-            ) {
-                Text($0.lastContactDate, format: .dateTime.day().month(.abbreviated).year())
+            ) { application in
+                LastContactCell(application: application)
             }
         }
         .overlay {
