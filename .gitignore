@@ -7,3 +7,13 @@ JobTracker.xcodeproj/
 *.xcuserstate
 xcuserdata/
 *.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+
+# Real application data. The JSON backup mirror holds company names, titles and
+# private notes; this repo is public. Never let an export be committed, wherever
+# the backup folder happens to point.
+jobtracker-backup*.json
+/*.json
+!/skills-lock.json
+
+# Scratch space for local-markdown notes and throwaway prototypes
+.scratch/
