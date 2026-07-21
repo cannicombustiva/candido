@@ -79,6 +79,23 @@ as skipped — do not claim the UI was visually verified.
 Filter `xcodebuild` output; it is extremely verbose. `grep -E "error:|BUILD"` is
 usually enough.
 
+## The milestone experiment lives outside this repo
+
+`SPEC.md` describes milestones M0–M7, each testing a different agent workflow.
+Two things they need are deliberately **not** in this repo:
+
+- **`../jobtracker-yardstick`** — the conformance checklist and the scoring
+  rig. Kept separate so it cannot be edited by the runs it grades. `score/` is
+  a Swift package that grades any milestone through a symlink:
+  `cd score && ln -sfn ../../candido-m0 subject && swift test`, plus
+  `score/tier-a.sh` for artifact checks. Scores land in `scores/<milestone>.md`.
+- **`../candido-m0`** — the M0 control run: seeded with `SPEC.md` and nothing
+  else, no CLAUDE.md, no CONTEXT.md, no ADRs. **Never edit its `SPEC.md`**, even
+  to fix a typo. It is a frozen seed and the comparison depends on it.
+
+If you are amending `SPEC.md`, the checklist and the affected score files must
+be updated in step — see that repo's README for the drift rules.
+
 ## Agent skills
 
 ### Issue tracker
