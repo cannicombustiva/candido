@@ -13,14 +13,8 @@ Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all op
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
-## No remote yet
-
-As of setup, this clone has **no git remote**, so every `gh issue` command will fail
-with `no git remotes found`. Before the issue-tracker skills can do anything, the repo
-needs to exist on GitHub and be wired up — e.g. `gh repo create <name> --private --source=. --push`.
-
-Don't create the remote unprompted. If a skill needs the tracker and no remote exists,
-say so and ask.
+The repo is `cannicombustiva/candido`. The `origin` remote uses HTTPS with the `gh`
+credential helper, not SSH.
 
 ## When a skill says "publish to the issue tracker"
 

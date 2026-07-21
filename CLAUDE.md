@@ -83,8 +83,8 @@ usually enough.
 
 ### Issue tracker
 
-Issues live as GitHub issues, managed with the `gh` CLI. No git remote exists yet, so
-`gh` will fail until the repo is pushed. See `docs/agents/issue-tracker.md`.
+Issues live as GitHub issues on `cannicombustiva/candido`, managed with the `gh` CLI.
+See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
