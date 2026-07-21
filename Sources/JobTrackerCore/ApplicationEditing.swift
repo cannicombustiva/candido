@@ -12,9 +12,9 @@ import Foundation
 extension Application {
     /// Whether this typed title is one worth keeping. The inspector shows its
     /// warning on this, so what the field complains about and what `rename`
-    /// refuses are the same rule.
+    /// refuses are the same rule — and the same rule the add sheet enforces.
     public static func canRename(to title: String) -> Bool {
-        !title.trimmed.isEmpty
+        isKeepableTitle(title)
     }
 
     /// Replaces the title, ignoring a blank one.
@@ -48,9 +48,7 @@ extension Application {
         guard !trimmed.isEmpty else { return nil }
 
         let candidate = trimmed.contains("://") ? trimmed : "https://\(trimmed)"
-        guard let url = URL(string: candidate), let host = url.host(), host.contains(".") else {
-            return nil
-        }
+        guard let url = URL(string: candidate), url.host()?.isEmpty == false else { return nil }
         return url
     }
 }

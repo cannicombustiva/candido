@@ -122,6 +122,16 @@ import Testing
         #expect(application.jobURL?.absoluteString == "https://jobs.example.com/1")
     }
 
+    /// A host with no dot in it is still a host — an intranet posting is a
+    /// posting.
+    @Test func aHostWithNoDotIsStillALink() throws {
+        let application = try applicationInAContext()
+
+        application.setJobURL(fromText: "https://careers/9")
+
+        #expect(application.jobURL?.absoluteString == "https://careers/9")
+    }
+
     /// Text that is not a link at all leaves no URL behind rather than
     /// storing something the owner cannot open.
     @Test(arguments: ["not a url", "???"])

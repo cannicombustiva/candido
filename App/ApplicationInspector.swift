@@ -5,8 +5,9 @@ import SwiftUI
 /// The selected Application, open for editing.
 ///
 /// Editing happens here and nowhere else — the table is not inline-editable.
-/// Every field an Application has is here except `appliedDate`, which is set
-/// once and so is shown but not offered.
+/// Title, Status, the last-contact date, the posting URL and notes are all
+/// editable. `appliedDate` and the Company are shown but not offered: the
+/// applied date is set once, and a Company is never managed directly.
 ///
 /// This is also where an Application becomes Archived (by taking a Terminal
 /// Status) and where staleness is cleared (by moving the last-contact date).
@@ -24,6 +25,13 @@ struct ApplicationInspector: View {
     /// has to be able to hold something the model does not.
     @State private var titleText: String
     @State private var jobURLText: String
+
+    /// Half-typed text is not a link, so the URL is written when the field is
+    /// left or submitted rather than on every keystroke — otherwise typing a
+    /// new one would throw the stored one away at the first character.
+    @FocusState private var jobURLFieldIsFocused: Bool
+
+    @State private var failure: String?
 
     init(application: Application) {
         self.application = application
@@ -76,7 +84,11 @@ struct ApplicationInspector: View {
 
             Section {
                 TextField("Job URL", text: $jobURLText, prompt: Text("https://"))
-                    .onChange(of: jobURLText) { commitJobURL() }
+                    .focused($jobURLFieldIsFocused)
+                    .onSubmit { commitJobURL() }
+                    .onChange(of: jobURLFieldIsFocused) { _, isFocused in
+                        if !isFocused { commitJobURL() }
+                    }
                 if let url = application.jobURL {
                     Link("Open posting", destination: url)
                         .font(.caption)
@@ -95,9 +107,18 @@ struct ApplicationInspector: View {
                     .font(.body)
                     .onChange(of: application.notes) { save() }
             }
+
+            if let failure {
+                Text(failure)
+                    .font(.callout)
+                    .foregroundStyle(.red)
+            }
         }
         .formStyle(.grouped)
         .inspectorColumnWidth(min: 260, ideal: 300, max: 420)
+        // Selecting another row replaces this view, taking a URL that was
+        // typed but never submitted with it unless it is written first.
+        .onDisappear { commitJobURL() }
     }
 
     private func commitTitle() {
@@ -111,8 +132,16 @@ struct ApplicationInspector: View {
     }
 
     /// SwiftData autosaves, but a relaunch right after a keystroke is exactly
-    /// the case the acceptance criteria name, so each edit is written through.
+    /// the case the owner will hit, so each edit is written through.
+    ///
+    /// A failure is shown rather than swallowed: an edit that never reached
+    /// the store would otherwise look exactly like one that did.
     private func save() {
-        try? context.save()
+        do {
+            try context.save()
+            failure = nil
+        } catch {
+            failure = "Could not save the change: \(error.localizedDescription)"
+        }
     }
 }
