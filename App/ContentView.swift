@@ -11,17 +11,22 @@ struct ContentView: View {
     @State private var sortOrder = [ApplicationSortField.lastContactDate.comparator(.forward)]
     @State private var selection: Application.ID?
     @State private var isAddingApplication = false
+    @State private var filter = ApplicationFilter.all
+
+    private var visibleApplications: [Application] {
+        filter.narrow(applications).sorted(using: sortOrder)
+    }
 
     var body: some View {
         NavigationSplitView {
-            FilterSidebar()
+            FilterSidebar(filter: $filter)
         } detail: {
             ApplicationTable(
-                applications: applications.sorted(using: sortOrder),
+                applications: visibleApplications,
                 sortOrder: $sortOrder,
                 selection: $selection
             )
-            .navigationTitle("Applications")
+            .navigationTitle(filter.displayName)
             .toolbar {
                 ToolbarItem {
                     Button {
@@ -41,18 +46,28 @@ struct ContentView: View {
     }
 }
 
-/// The four filters. Inert until the filtering ticket lands — showing them
-/// disabled is honest about that; showing them live would lie.
+/// The four ways the list is narrowed. Which Applications each one holds is
+/// the package's decision — the sidebar only picks one.
 private struct FilterSidebar: View {
+    @Binding var filter: ApplicationFilter
+
     var body: some View {
-        List {
-            Label("All", systemImage: "tray.full")
-            Label("Active", systemImage: "flame")
-            Label("Stale", systemImage: "clock.badge.exclamationmark")
-            Label("Archived", systemImage: "archivebox")
+        List(ApplicationFilter.allCases, selection: $filter) { filter in
+            Label(filter.displayName, systemImage: filter.symbolName)
+                .tag(filter)
         }
-        .disabled(true)
         .navigationSplitViewColumnWidth(min: 160, ideal: 180)
+    }
+}
+
+extension ApplicationFilter {
+    fileprivate var symbolName: String {
+        switch self {
+        case .all: "tray.full"
+        case .active: "flame"
+        case .stale: "clock.badge.exclamationmark"
+        case .archived: "archivebox"
+        }
     }
 }
 
