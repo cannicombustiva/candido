@@ -1,16 +1,5 @@
 import Foundation
 
-extension Status {
-    /// A Status the Application does not move on from. The owner never
-    /// archives anything by hand — being Terminal *is* being archived.
-    public var isTerminal: Bool {
-        switch self {
-        case .rejected, .withdrawn: true
-        case .applied, .screening, .interviewing, .offer: false
-        }
-    }
-}
-
 /// The four ways the list of Applications is narrowed.
 ///
 /// All of them are derived from Status on every read. None is a stored flag,
@@ -46,7 +35,11 @@ public enum ApplicationFilter: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .all: true
         case .active: !application.status.isTerminal
-        case .stale: application.isStale(asOf: now, in: calendar)
+        // Stale is the Stale subset of Active, and says so structurally. It
+        // would be true today from `isStale` alone — no Terminal Status has a
+        // threshold — but that is a coincidence between two files, and this
+        // filter must not depend on it.
+        case .stale: !application.status.isTerminal && application.isStale(asOf: now, in: calendar)
         case .archived: application.status.isTerminal
         }
     }
