@@ -2,13 +2,6 @@
 
 Candido is a macOS app for tracking my own job applications.
 
-The name is the product name — what the window, the menu bar and the README
-call it. The code keeps its own names: the package is `JobTrackerCore`, the
-target and the bundle identifiers are `JobTracker` / `com.candido.JobTracker`.
-Those are deliberately not renamed — a sandboxed app's container is keyed by its
-bundle identifier, so changing it would orphan the store holding my real
-applications.
-
 **This document is the contract.** Implementation is agent-written; this file is
 hand-written and is the source of truth. When code and this document disagree,
 the code is wrong.
@@ -213,3 +206,17 @@ never know whether the ceremony bought anything.
 **Known risk:** the app becomes a vehicle I stop caring about, leaving six
 half-features and a lot of process. Mitigation is the M3 gate — real
 applications tracked in it, or the later experiments have no ground truth.
+
+## Appendix: the name
+
+The product is **Candido**. The code is not, and the mismatch is deliberate:
+the package stays `JobTrackerCore`, the target and scheme stay `JobTracker`, and
+the bundle identifiers stay `com.candido.JobTracker` and
+`com.candido.JobTracker.dev`. A sandboxed app's container is keyed by its bundle
+identifier, so renaming the identifier to match the product would point the app
+at a fresh, empty container and hide every application I have tracked. Only the
+display name is Candido.
+
+This appendix is deliberately at the end of the file: `jobtracker-yardstick`
+cites this spec by line number, and an amendment inserted above existing text
+would move every citation in the checklist.
