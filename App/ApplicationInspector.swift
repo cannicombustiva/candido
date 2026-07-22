@@ -71,15 +71,6 @@ struct ApplicationInspector: View {
                     displayedComponents: .date
                 )
                 .onChange(of: application.lastContactDate) { save() }
-
-                if application.isStale() {
-                    Label(
-                        "Silent for \(application.daysOfSilence()) days.",
-                        systemImage: "clock.badge.exclamationmark"
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                }
             }
 
             Section {
