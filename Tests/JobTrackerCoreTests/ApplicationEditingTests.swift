@@ -10,27 +10,25 @@ import Testing
 /// and a posting URL the owner types as text.
 @MainActor
 @Suite struct ApplicationEditingTests {
-    private func applicationInAContext(
+    private let calendar = TestClock.calendar
+    private let now = TestClock.now
+    private let store: TestStore
+
+    init() throws {
+        store = try TestStore()
+    }
+
+    private func application(
         title: String = "iOS Engineer",
         jobURL: URL? = nil
     ) throws -> Application {
-        let container = try ModelContainer(
-            for: Schema(JobTrackerCore.models),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let context = ModelContext(container)
-        return try Application.create(
-            companyNamed: "Spotify",
-            title: title,
-            jobURL: jobURL,
-            in: context
-        )
+        try store.application(company: "Spotify", title: title, jobURL: jobURL)
     }
 
     // MARK: - Renaming
 
     @Test func renamingReplacesTheTitle() throws {
-        let application = try applicationInAContext()
+        let application = try application()
 
         application.rename(to: "Senior iOS Engineer")
 
@@ -38,7 +36,7 @@ import Testing
     }
 
     @Test func renamingTrimsSurroundingSpace() throws {
-        let application = try applicationInAContext()
+        let application = try application()
 
         application.rename(to: "  Staff Engineer\n")
 
@@ -47,7 +45,7 @@ import Testing
 
     @Test(arguments: ["", "   ", "\t\n"])
     func aBlankTitleIsRefusedRatherThanStored(blank: String) throws {
-        let application = try applicationInAContext(title: "iOS Engineer")
+        let application = try application(title: "iOS Engineer")
 
         application.rename(to: blank)
 
@@ -66,13 +64,13 @@ import Testing
     // MARK: - The posting URL as text
 
     @Test func anApplicationWithNoPostingURLEditsAsEmptyText() throws {
-        let application = try applicationInAContext(jobURL: nil)
+        let application = try application(jobURL: nil)
 
         #expect(application.jobURLText == "")
     }
 
     @Test func anApplicationWithAPostingURLEditsAsItsText() throws {
-        let application = try applicationInAContext(
+        let application = try application(
             jobURL: URL(string: "https://jobs.example.com/123"))
 
         #expect(application.jobURLText == "https://jobs.example.com/123")
@@ -80,7 +78,7 @@ import Testing
 
     @Test(arguments: ["", "   "])
     func clearingTheTextClearsThePostingURL(blank: String) throws {
-        let application = try applicationInAContext(
+        let application = try application(
             jobURL: URL(string: "https://jobs.example.com/123"))
 
         application.setJobURL(fromText: blank)
@@ -89,7 +87,7 @@ import Testing
     }
 
     @Test func aFullyTypedURLIsKeptAsTyped() throws {
-        let application = try applicationInAContext()
+        let application = try application()
 
         application.setJobURL(fromText: "https://jobs.example.com/123?ref=x")
 
@@ -97,7 +95,7 @@ import Testing
     }
 
     @Test func aPastedURLKeepsItsSchemeWhateverItIs() throws {
-        let application = try applicationInAContext()
+        let application = try application()
 
         application.setJobURL(fromText: "http://careers.example.com/9")
 
@@ -107,7 +105,7 @@ import Testing
     /// Postings are pasted from a browser bar as often as copied whole, and a
     /// bare host is unusable as a link without a scheme.
     @Test func aBareHostIsAssumedToBeHTTPS() throws {
-        let application = try applicationInAContext()
+        let application = try application()
 
         application.setJobURL(fromText: "careers.example.com/9")
 
@@ -115,7 +113,7 @@ import Testing
     }
 
     @Test func surroundingSpaceIsTrimmedFromAPastedURL() throws {
-        let application = try applicationInAContext()
+        let application = try application()
 
         application.setJobURL(fromText: "  https://jobs.example.com/1  ")
 
@@ -125,7 +123,7 @@ import Testing
     /// A host with no dot in it is still a host — an intranet posting is a
     /// posting.
     @Test func aHostWithNoDotIsStillALink() throws {
-        let application = try applicationInAContext()
+        let application = try application()
 
         application.setJobURL(fromText: "https://careers/9")
 
@@ -136,7 +134,7 @@ import Testing
     /// storing something the owner cannot open.
     @Test(arguments: ["not a url", "???"])
     func textThatIsNotALinkClearsThePostingURL(nonsense: String) throws {
-        let application = try applicationInAContext(
+        let application = try application(
             jobURL: URL(string: "https://jobs.example.com/123"))
 
         application.setJobURL(fromText: nonsense)
@@ -150,24 +148,22 @@ import Testing
     /// forward is the whole of "clearing staleness" — there is nothing else to
     /// reset.
     @Test func movingTheLastContactDateForwardClearsStaleness() throws {
-        let application = try applicationInAContext()
-        let now = Date()
-        application.lastContactDate = now.addingTimeInterval(-60 * 24 * 60 * 60)
-        #expect(application.isStale(asOf: now))
+        let application = try store.application(silentFor: 60)
+        #expect(application.isStale(asOf: now, in: calendar))
 
         application.lastContactDate = now
 
-        #expect(application.isStale(asOf: now) == false)
+        #expect(!application.isStale(asOf: now, in: calendar))
     }
 
     /// Archiving is not a separate act: it is what a Terminal Status means.
     @Test func changingTheStatusToATerminalOneArchivesTheApplication() throws {
-        let application = try applicationInAContext()
-        #expect(ApplicationFilter.active.narrow([application]).count == 1)
+        let application = try application()
+        #expect(ApplicationFilter.active.narrow([application], asOf: now, in: calendar).count == 1)
 
         application.status = .rejected
 
-        #expect(ApplicationFilter.archived.narrow([application]).count == 1)
-        #expect(ApplicationFilter.active.narrow([application]).isEmpty)
+        #expect(ApplicationFilter.archived.narrow([application], asOf: now, in: calendar).count == 1)
+        #expect(ApplicationFilter.active.narrow([application], asOf: now, in: calendar).isEmpty)
     }
 }

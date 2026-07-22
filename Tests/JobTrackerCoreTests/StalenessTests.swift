@@ -9,23 +9,12 @@ import Testing
 /// entirely plausible and is wrong.
 @MainActor
 @Suite struct StalenessTests {
-    /// A fixed timezone, so the suite means the same thing on any machine.
-    private let calendar: Calendar = {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/London")!
-        return calendar
-    }()
+    private let calendar = TestClock.calendar
+    private let now = TestClock.now
+    private let store: TestStore
 
-    /// Midday on a fixed date. Nothing in staleness may depend on the hour,
-    /// and several tests below prove it.
-    private var now: Date {
-        calendar.date(from: DateComponents(year: 2026, month: 7, day: 21, hour: 12))!
-    }
-
-    private func date(_ daysBeforeNow: Int, atHour hour: Int = 12) -> Date {
-        let day = calendar.date(byAdding: .day, value: -daysBeforeNow, to: now)!
-        return calendar.date(
-            bySettingHour: hour, minute: 0, second: 0, of: day)!
+    init() throws {
+        store = try TestStore()
     }
 
     private func application(
@@ -34,18 +23,11 @@ import Testing
         atHour hour: Int = 12,
         appliedDaysAgo: Int? = nil
     ) throws -> Application {
-        let container = try ModelContainer(
-            for: Schema(JobTrackerCore.models),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let context = ModelContext(container)
-        return try Application.create(
-            companyNamed: "Spotify",
-            title: "iOS Engineer",
+        try store.application(
             status: status,
-            appliedDate: date(appliedDaysAgo ?? daysAgo),
-            lastContactDate: date(daysAgo, atHour: hour),
-            in: context
+            silentFor: daysAgo,
+            atHour: hour,
+            appliedDaysAgo: appliedDaysAgo
         )
     }
 
@@ -139,12 +121,10 @@ import Testing
     /// elapsed intervals would report 10 days here and call the Application
     /// fresh; calendar days report 11 and call it Stale. This is the exact
     /// deviation ADR 0001 says a future reader is most likely to introduce.
+    ///
+    /// The dates here are absolute rather than counted back from
+    /// `TestClock.now`, because the clock change is the thing under test.
     @Test func isUnaffectedByADaylightSavingTransition() throws {
-        let container = try ModelContainer(
-            for: Schema(JobTrackerCore.models),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let context = ModelContext(container)
         // Europe/London moves to BST on 29 March 2026.
         let beforeTheClockChange = calendar.date(
             from: DateComponents(year: 2026, month: 3, day: 25, hour: 12))!
@@ -156,7 +136,7 @@ import Testing
             status: .interviewing,
             appliedDate: beforeTheClockChange,
             lastContactDate: beforeTheClockChange,
-            in: context
+            in: store.context
         )
 
         #expect(
