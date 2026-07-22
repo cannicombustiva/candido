@@ -1,6 +1,10 @@
 import SwiftData
 
-/// The domain layer for the job application tracker.
+/// The domain layer for Candido, the job application tracker.
+///
+/// Candido is the product name only. This module, the app target and the bundle
+/// identifiers keep the `JobTracker` names — the sandbox container is keyed by
+/// the identifier, so renaming it would orphan the owner's store.
 ///
 /// Everything with a rule in it lives here: the SwiftData models, staleness,
 /// company find-or-create, and the JSON codec. The app target holds views only.

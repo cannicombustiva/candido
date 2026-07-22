@@ -25,6 +25,10 @@ targets:
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES
+        # The product is called Candido; the target, the product name and the
+        # bundle identifier stay JobTracker. Renaming the identifier would key
+        # the app to a new, empty sandbox container.
+        INFOPLIST_KEY_CFBundleDisplayName: Candido
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_ENTITLEMENTS: App/JobTracker.entitlements
@@ -39,4 +43,4 @@ targets:
         # container: agent runs cannot touch the owner's tracked applications.
         Debug:
           PRODUCT_BUNDLE_IDENTIFIER: com.candido.JobTracker.dev
-          INFOPLIST_KEY_CFBundleDisplayName: JobTracker (Dev)
+          INFOPLIST_KEY_CFBundleDisplayName: Candido (Dev)

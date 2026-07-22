@@ -1,4 +1,4 @@
-# Job Application Tracker
+# Candido
 
 Tracks the owner's own job applications, one company at a time, and surfaces the
 ones that have gone quiet. `SPEC.md` is the contract; this file is the glossary.
