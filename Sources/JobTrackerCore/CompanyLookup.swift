@@ -65,7 +65,14 @@ extension Application {
     /// add sheet enables its button on this, so the rule the button obeys and
     /// the rule `create` enforces are the same rule.
     public static func canCreate(companyName: String, title: String) -> Bool {
-        !companyName.trimmed.isEmpty && !title.trimmed.isEmpty
+        !companyName.trimmed.isEmpty && isKeepableTitle(title)
+    }
+
+    /// A title with something in it. One rule, obeyed everywhere a title is
+    /// typed: an Application with a blank title is a row the owner cannot
+    /// identify, whether it is being added or renamed.
+    static func isKeepableTitle(_ title: String) -> Bool {
+        !title.trimmed.isEmpty
     }
 
     /// Adds an Application, attaching it to the Company that name refers to —
@@ -85,8 +92,8 @@ extension Application {
         notes: String = "",
         in context: ModelContext
     ) throws -> Application {
+        guard isKeepableTitle(title) else { throw ApplicationInputError.blankTitle }
         let trimmedTitle = title.trimmed
-        guard !trimmedTitle.isEmpty else { throw ApplicationInputError.blankTitle }
 
         let company = try Company.findOrCreate(named: companyName, in: context)
         let application = Application(

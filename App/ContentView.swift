@@ -2,8 +2,8 @@ import JobTrackerCore
 import SwiftData
 import SwiftUI
 
-/// The single window: sidebar filters, the table of Applications, and (later)
-/// the inspector.
+/// The single window: sidebar filters, the table of Applications, and the
+/// inspector the selected one is edited in.
 struct ContentView: View {
     @Environment(\.modelContext) private var context
     @Query private var applications: [Application]
@@ -17,6 +17,14 @@ struct ContentView: View {
         filter.narrow(applications).sorted(using: sortOrder)
     }
 
+    /// The selected row's Application, or `nil` when nothing is selected.
+    /// Looked up across every Application rather than the visible ones: giving
+    /// a Status a Terminal value moves the row out of the Active filter, and
+    /// the panel should not blank out from under the edit that did it.
+    private var selectedApplication: Application? {
+        applications.first { $0.id == selection }
+    }
+
     var body: some View {
         NavigationSplitView {
             FilterSidebar(filter: $filter)
@@ -27,6 +35,20 @@ struct ContentView: View {
                 selection: $selection
             )
             .navigationTitle(filter.displayName)
+            .inspector(isPresented: .constant(true)) {
+                if let selectedApplication {
+                    // Keyed on the row: the inspector holds the title and URL
+                    // as text, and that text belongs to one Application.
+                    ApplicationInspector(application: selectedApplication)
+                        .id(selectedApplication.id)
+                } else {
+                    ContentUnavailableView(
+                        "No application selected",
+                        systemImage: "sidebar.right",
+                        description: Text("Select a row to read and edit it.")
+                    )
+                }
+            }
             .toolbar {
                 ToolbarItem {
                     Button {
