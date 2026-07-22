@@ -23,10 +23,44 @@ checking your diff line by line. That means:
 - If you are unsure whether something matches the spec, flag it. It will not be
   caught downstream.
 
+## Rule: one worktree per session, and check which one you are in
+
+More than one agent runs against this repo at a time. They must not share a
+checkout: on 22 Jul 2026 two sessions did, and one committed its work onto the
+other's branch and pushed it into their PR — the tree it committed to was not
+the one it had read `git status` from at startup.
+
+Start work by claiming a worktree:
+
+```bash
+scripts/worktree.sh <issue-number> <slug>   # e.g. scripts/worktree.sh 14 day-boundary
+```
+
+It branches off `origin/main` and puts the tree in `../candido-worktrees/`,
+with its own `.build/` and `DerivedData/`. Commit and push only from there.
+
+Then, because a session can be long and the tree can move under it:
+
+- **Re-read the branch immediately before every commit** (`git status -sb`).
+  The git snapshot in the session prompt is from startup and goes stale.
+- **Never `git add -A` or `git commit -a`.** Stage the paths you edited by
+  name, so another session's in-flight work cannot ride along.
+- If `git status` shows changes you did not make, stop and ask. Do not commit
+  around them and do not revert them.
+
+The primary checkout at `candido/` is for reading, reviewing and merging.
+`../candido-m0` is the frozen M0 control run and is not a worktree — never
+branch or commit there.
+
+One thing worktrees do not isolate: every Debug build shares the bundle
+identifier `com.candido.JobTracker.dev`, so all of them read one sandbox
+container. Launch the app from one session at a time.
+
 ## Layout
 
 ```
 Package.swift              JobTrackerCore package manifest
+scripts/worktree.sh        Claim a worktree for an issue (see the rule above)
 Sources/JobTrackerCore/    Domain: models, staleness, find-or-create, JSON codec
 Tests/JobTrackerCoreTests/ swift-testing tests for the above
 App/                       SwiftUI app target sources + entitlements
