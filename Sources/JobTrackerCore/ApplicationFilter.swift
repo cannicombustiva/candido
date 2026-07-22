@@ -13,8 +13,9 @@ public enum ApplicationFilter: String, CaseIterable, Identifiable, Sendable {
     /// the pursuit is still live, the next move is simply the owner's.
     case active
 
-    /// The Stale subset of Active. Always a subset — a Terminal Application
-    /// never awaits their reply, so it can never be Stale.
+    /// The Stale subset of Active. Always a subset, and not by agreement
+    /// between two files: a Terminal Status stands `over`, only
+    /// `awaitingTheirReply` can go Stale, and one switch decides both.
     case stale
 
     /// Every Application whose Status is Terminal.
@@ -35,11 +36,7 @@ public enum ApplicationFilter: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .all: true
         case .active: !application.status.isTerminal
-        // Stale is the Stale subset of Active, and says so structurally. It
-        // would be true today from `isStale` alone — no Terminal Status has a
-        // threshold — but that is a coincidence between two files, and this
-        // filter must not depend on it.
-        case .stale: !application.status.isTerminal && application.isStale(asOf: now, in: calendar)
+        case .stale: application.isStale(asOf: now, in: calendar)
         case .archived: application.status.isTerminal
         }
     }

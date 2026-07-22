@@ -20,15 +20,6 @@ public enum Status: String, Codable, CaseIterable, Sendable {
         Status.allCases.firstIndex(of: self) ?? 0
     }
 
-    /// A Status the Application does not move on from. The owner never
-    /// archives anything by hand — being Terminal *is* being archived.
-    public var isTerminal: Bool {
-        switch self {
-        case .rejected, .withdrawn: true
-        case .applied, .screening, .interviewing, .offer: false
-        }
-    }
-
     public var displayName: String {
         rawValue.capitalized
     }

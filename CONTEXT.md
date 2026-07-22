@@ -35,13 +35,26 @@ contact and today. Not elapsed hours — time of day never affects whether an
 Application is Stale.
 _Avoid_: Age, elapsed time, days old
 
+**Standing**:
+Whose move it is, and whether an Application is still in play. Every Status has
+exactly one Standing, and it is the only classification of Status there is —
+Awaits their reply, Terminal and the staleness thresholds are all read off it.
+_Avoid_: State, category, kind
+
 **Awaits their reply**:
-The property of a Status meaning the next move belongs to the company, not the
-owner. Only such Applications can be Stale.
+The Standing of a Status meaning the next move belongs to the company, not the
+owner. It carries the days of silence that Status tolerates. Only such
+Applications can be Stale.
 _Avoid_: Pending, open, waiting
+
+**Awaits your move**:
+The Standing of `offer`: still live, but the owner is the one who owes an
+answer, so it can never be Stale.
+_Avoid_: Pending, action required
 
 **Terminal**:
 A Status the Application does not move on from: `rejected` or `withdrawn`.
+Its Standing is Over.
 _Avoid_: Closed, finished, dead
 
 ### Views
@@ -62,8 +75,8 @@ archiving.
 _Avoid_: Closed, hidden, done, inactive
 
 **Stale (view)**:
-The Stale subset of Active. Always a subset — a Terminal Application never
-awaits their reply, so it can never be Stale.
+The Stale subset of Active. Always a subset, and structurally so — a Terminal
+Application stands Over, and only Awaits their reply can go Stale.
 
 **All**:
 Every Application, Active and Archived alike.
