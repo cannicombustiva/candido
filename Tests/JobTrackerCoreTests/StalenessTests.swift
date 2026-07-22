@@ -35,14 +35,19 @@ import Testing
 
     @Test(arguments: [Status.applied, .screening, .interviewing])
     func waitsOnTheirReply(_ status: Status) {
-        #expect(status.awaitsTheirReply)
+        guard case .awaitingTheirReply = status.standing else {
+            Issue.record("\(status) should await their reply")
+            return
+        }
     }
 
     /// An `offer` is the owner's move, and the two terminal statuses are over.
     /// None of them can ever be Stale, however long the silence.
     @Test(arguments: [Status.offer, .rejected, .withdrawn])
     func doesNotWaitOnTheirReply(_ status: Status) throws {
-        #expect(!status.awaitsTheirReply)
+        if case .awaitingTheirReply = status.standing {
+            Issue.record("\(status) should not await their reply")
+        }
 
         let application = try application(status, lastContact: 500)
 
@@ -59,7 +64,7 @@ import Testing
         (Status.interviewing, 10),
     ])
     func isNotStaleAtExactlyItsThreshold(status: Status, threshold: Int) throws {
-        #expect(status.stalenessThreshold == threshold)
+        #expect(status.standing == .awaitingTheirReply(silenceTolerated: threshold))
 
         let atThreshold = try application(status, lastContact: threshold)
         #expect(!atThreshold.isStale(asOf: now, in: calendar))
