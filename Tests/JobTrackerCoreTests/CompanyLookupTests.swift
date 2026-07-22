@@ -9,17 +9,15 @@ import Testing
 /// resolve to one `Company`, and the first spelling entered stays as the name.
 @MainActor
 @Suite struct CompanyLookupTests {
-    private func emptyContext() throws -> ModelContext {
-        let container = try ModelContainer(
-            for: Schema(JobTrackerCore.models),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        return ModelContext(container)
+    private let store: TestStore
+    private let context: ModelContext
+
+    init() throws {
+        store = try TestStore()
+        context = store.context
     }
 
     @Test func createsACompanyTheFirstTimeANameIsSeen() throws {
-        let context = try emptyContext()
-
         let company = try Company.findOrCreate(named: "Spotify", in: context)
 
         #expect(company.name == "Spotify")
@@ -30,7 +28,6 @@ import Testing
     func resolvesToTheSameCompanyWhateverTheCasingOrSurroundingSpace(
         _ variant: String
     ) throws {
-        let context = try emptyContext()
         let first = try Company.findOrCreate(named: "Spotify", in: context)
 
         let second = try Company.findOrCreate(named: variant, in: context)
@@ -40,7 +37,6 @@ import Testing
     }
 
     @Test func keepsTheFirstSpellingAsTheDisplayName() throws {
-        let context = try emptyContext()
         _ = try Company.findOrCreate(named: " spotify ", in: context)
 
         let company = try Company.findOrCreate(named: "SPOTIFY", in: context)
@@ -49,8 +45,6 @@ import Testing
     }
 
     @Test func keepsDifferentCompaniesApart() throws {
-        let context = try emptyContext()
-
         let spotify = try Company.findOrCreate(named: "Spotify", in: context)
         let monzo = try Company.findOrCreate(named: "Monzo", in: context)
 
@@ -59,8 +53,6 @@ import Testing
     }
 
     @Test func attachesEveryApplicationOfOneCompanyToThatCompany() throws {
-        let context = try emptyContext()
-
         let first = try Application.create(
             companyNamed: "Spotify", title: "iOS Engineer", in: context)
         let second = try Application.create(
@@ -72,16 +64,12 @@ import Testing
     }
 
     @Test func rejectsANameThatIsOnlyWhitespace() throws {
-        let context = try emptyContext()
-
         #expect(throws: ApplicationInputError.blankCompanyName) {
             _ = try Company.findOrCreate(named: "   ", in: context)
         }
     }
 
     @Test func rejectsATitleThatIsOnlyWhitespace() throws {
-        let context = try emptyContext()
-
         #expect(throws: ApplicationInputError.blankTitle) {
             _ = try Application.create(companyNamed: "Spotify", title: "  ", in: context)
         }
@@ -89,8 +77,6 @@ import Testing
     }
 
     @Test func trimsWhatItStores() throws {
-        let context = try emptyContext()
-
         let application = try Application.create(
             companyNamed: "  Spotify  ", title: "  iOS Engineer  ", in: context)
 
@@ -110,8 +96,6 @@ import Testing
     func agreesWithCreateAboutWhatIsEnoughToSubmit(
         companyName: String, title: String, expected: Bool
     ) throws {
-        let context = try emptyContext()
-
         #expect(Application.canCreate(companyName: companyName, title: title) == expected)
 
         let created = try? Application.create(
@@ -122,8 +106,7 @@ import Testing
     /// An application sent 60 days ago has been silent for 60 days. Stamping
     /// today onto it would make a backdated row read as freshly contacted.
     @Test func treatsTheAppliedDateAsTheLastContactUnlessToldOtherwise() throws {
-        let context = try emptyContext()
-        let sixtyDaysAgo = Calendar.current.date(byAdding: .day, value: -60, to: Date())!
+        let sixtyDaysAgo = TestClock.date(daysAgo: 60)
 
         let application = try Application.create(
             companyNamed: "Spotify", title: "iOS Engineer", appliedDate: sixtyDaysAgo,
@@ -133,9 +116,8 @@ import Testing
     }
 
     @Test func keepsAnExplicitLastContactDate() throws {
-        let context = try emptyContext()
-        let applied = Calendar.current.date(byAdding: .day, value: -60, to: Date())!
-        let replied = Calendar.current.date(byAdding: .day, value: -2, to: Date())!
+        let applied = TestClock.date(daysAgo: 60)
+        let replied = TestClock.date(daysAgo: 2)
 
         let application = try Application.create(
             companyNamed: "Spotify", title: "iOS Engineer", appliedDate: applied,

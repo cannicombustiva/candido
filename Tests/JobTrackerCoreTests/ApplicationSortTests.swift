@@ -9,89 +9,60 @@ import Testing
 /// `applied` before `offer` — rather than the alphabet.
 @MainActor
 @Suite struct ApplicationSortTests {
-    private func context() throws -> ModelContext {
-        let container = try ModelContainer(
-            for: Schema(JobTrackerCore.models),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        return ModelContext(container)
+    private let store: TestStore
+
+    init() throws {
+        store = try TestStore()
     }
 
-    private func day(_ offset: Int) -> Date {
-        Calendar.current.date(byAdding: .day, value: offset, to: Date())!
+    private func sorted(
+        by field: ApplicationSortField, _ order: SortOrder = .forward
+    ) throws -> [Application] {
+        try store.applications().sorted(using: field.comparator(order))
     }
 
     @Test func sortsByCompanyNameIgnoringCasing() throws {
-        let context = try context()
-        _ = try Application.create(companyNamed: "zalando", title: "A", in: context)
-        _ = try Application.create(companyNamed: "Apple", title: "B", in: context)
-        _ = try Application.create(companyNamed: "monzo", title: "C", in: context)
+        try store.application(company: "zalando", title: "A")
+        try store.application(company: "Apple", title: "B")
+        try store.application(company: "monzo", title: "C")
 
-        let sorted = try context.fetch(FetchDescriptor<Application>())
-            .sorted(using: ApplicationSortField.company.comparator(.forward))
-
-        #expect(sorted.map(\.title) == ["B", "C", "A"])
+        #expect(try sorted(by: .company).map(\.title) == ["B", "C", "A"])
     }
 
     @Test func reversesWhenTheOrderIsReversed() throws {
-        let context = try context()
-        _ = try Application.create(companyNamed: "Apple", title: "B", in: context)
-        _ = try Application.create(companyNamed: "zalando", title: "A", in: context)
+        try store.application(company: "Apple", title: "B")
+        try store.application(company: "zalando", title: "A")
 
-        let sorted = try context.fetch(FetchDescriptor<Application>())
-            .sorted(using: ApplicationSortField.company.comparator(.reverse))
-
-        #expect(sorted.map(\.title) == ["A", "B"])
+        #expect(try sorted(by: .company, .reverse).map(\.title) == ["A", "B"])
     }
 
     @Test func sortsByStatusAlongThePipelineNotTheAlphabet() throws {
-        let context = try context()
         for status in [Status.offer, .applied, .rejected, .interviewing] {
-            let application = try Application.create(
-                companyNamed: status.rawValue, title: status.rawValue, in: context)
-            application.status = status
+            try store.application(company: status.rawValue, title: status.rawValue, status: status)
         }
 
-        let sorted = try context.fetch(FetchDescriptor<Application>())
-            .sorted(using: ApplicationSortField.status.comparator(.forward))
-
-        #expect(sorted.map(\.status) == [.applied, .interviewing, .offer, .rejected])
+        #expect(
+            try sorted(by: .status).map(\.status) == [.applied, .interviewing, .offer, .rejected])
     }
 
     @Test func sortsByLastContactOldestFirst() throws {
-        let context = try context()
-        let recent = try Application.create(companyNamed: "Recent", title: "R", in: context)
-        recent.lastContactDate = day(-1)
-        let old = try Application.create(companyNamed: "Old", title: "O", in: context)
-        old.lastContactDate = day(-30)
+        try store.application(company: "Recent", title: "R", silentFor: 1)
+        try store.application(company: "Old", title: "O", silentFor: 30)
 
-        let sorted = try context.fetch(FetchDescriptor<Application>())
-            .sorted(using: ApplicationSortField.lastContactDate.comparator(.forward))
-
-        #expect(sorted.map(\.title) == ["O", "R"])
+        #expect(try sorted(by: .lastContactDate).map(\.title) == ["O", "R"])
     }
 
     @Test func sortsByAppliedDateOldestFirst() throws {
-        let context = try context()
-        let recent = try Application.create(companyNamed: "Recent", title: "R", in: context)
-        recent.appliedDate = day(-2)
-        let old = try Application.create(companyNamed: "Old", title: "O", in: context)
-        old.appliedDate = day(-40)
+        try store.application(company: "Recent", title: "R", appliedDaysAgo: 2)
+        try store.application(company: "Old", title: "O", appliedDaysAgo: 40)
 
-        let sorted = try context.fetch(FetchDescriptor<Application>())
-            .sorted(using: ApplicationSortField.appliedDate.comparator(.forward))
-
-        #expect(sorted.map(\.title) == ["O", "R"])
+        #expect(try sorted(by: .appliedDate).map(\.title) == ["O", "R"])
     }
 
     @Test func sortsByTitleIgnoringCasing() throws {
-        let context = try context()
-        _ = try Application.create(companyNamed: "A", title: "backend engineer", in: context)
-        _ = try Application.create(companyNamed: "B", title: "Android Engineer", in: context)
+        try store.application(company: "A", title: "backend engineer")
+        try store.application(company: "B", title: "Android Engineer")
 
-        let sorted = try context.fetch(FetchDescriptor<Application>())
-            .sorted(using: ApplicationSortField.title.comparator(.forward))
-
-        #expect(sorted.map(\.title) == ["Android Engineer", "backend engineer"])
+        #expect(try sorted(by: .title).map(\.title) == ["Android Engineer", "backend engineer"])
     }
 }

@@ -6,33 +6,22 @@ import Testing
 
 /// The four filters are derived from Status every time they are asked. None is
 /// a stored flag, and an Application is never "put into" one.
+///
+/// Where a filter consults staleness, what is asserted here is that it consults
+/// it at all — the exact day the boundary falls on belongs to `StalenessTests`
+/// and is not restated.
 @MainActor
 @Suite struct ApplicationFilterTests {
-    private let calendar: Calendar = {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/London")!
-        return calendar
-    }()
+    private let calendar = TestClock.calendar
+    private let now = TestClock.now
+    private let store: TestStore
 
-    private var now: Date {
-        calendar.date(from: DateComponents(year: 2026, month: 7, day: 21, hour: 12))!
+    init() throws {
+        store = try TestStore()
     }
 
     private func application(_ status: Status, silentFor days: Int) throws -> Application {
-        let container = try ModelContainer(
-            for: Schema(JobTrackerCore.models),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let context = ModelContext(container)
-        let lastContact = calendar.date(byAdding: .day, value: -days, to: now)!
-        return try Application.create(
-            companyNamed: "Spotify",
-            title: "iOS Engineer",
-            status: status,
-            appliedDate: lastContact,
-            lastContactDate: lastContact,
-            in: context
-        )
+        try store.application(status: status, silentFor: days)
     }
 
     // MARK: - Terminal
@@ -76,18 +65,20 @@ import Testing
 
     // MARK: - Stale is always a subset of Active
 
-    @Test func staleContainsAnApplicationThatHasGoneQuiet() throws {
-        let application = try application(.applied, silentFor: 22)
+    /// Stale reads staleness rather than a stored flag: a long silence puts a
+    /// row in, a recent contact keeps it out, and either way it stays Active.
+    ///
+    /// The two silences straddle the `applied` threshold by one day rather than
+    /// sitting safely either side of it, so a filter that asked staleness about
+    /// the wrong day would fail here and not only in `StalenessTests`.
+    @Test func staleFollowsTheSilenceAndStaysWithinActive() throws {
+        let quiet = try application(.applied, silentFor: 22)
+        let recentlyContacted = try application(.applied, silentFor: 21)
 
-        #expect(ApplicationFilter.stale.contains(application, asOf: now, in: calendar))
-        #expect(ApplicationFilter.active.contains(application, asOf: now, in: calendar))
-    }
-
-    @Test func staleExcludesAnApplicationStillWithinItsThreshold() throws {
-        let application = try application(.applied, silentFor: 21)
-
-        #expect(!ApplicationFilter.stale.contains(application, asOf: now, in: calendar))
-        #expect(ApplicationFilter.active.contains(application, asOf: now, in: calendar))
+        #expect(ApplicationFilter.stale.contains(quiet, asOf: now, in: calendar))
+        #expect(ApplicationFilter.active.contains(quiet, asOf: now, in: calendar))
+        #expect(!ApplicationFilter.stale.contains(recentlyContacted, asOf: now, in: calendar))
+        #expect(ApplicationFilter.active.contains(recentlyContacted, asOf: now, in: calendar))
     }
 
     /// A Terminal Application never awaits their reply, so however long the
@@ -130,21 +121,10 @@ import Testing
     // MARK: - Narrowing a list
 
     @Test func narrowsAListToTheFilteredApplications() throws {
-        let container = try ModelContainer(
-            for: Schema(JobTrackerCore.models),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let context = ModelContext(container)
-        func add(_ company: String, _ status: Status, silentFor days: Int) throws {
-            let lastContact = calendar.date(byAdding: .day, value: -days, to: now)!
-            try Application.create(
-                companyNamed: company, title: "Engineer", status: status,
-                appliedDate: lastContact, lastContactDate: lastContact, in: context)
-        }
-        try add("Fresh", .applied, silentFor: 3)
-        try add("Quiet", .applied, silentFor: 30)
-        try add("Rejected", .rejected, silentFor: 30)
-        let applications = try context.fetch(FetchDescriptor<Application>())
+        try store.application(company: "Fresh", status: .applied, silentFor: 3)
+        try store.application(company: "Quiet", status: .applied, silentFor: 30)
+        try store.application(company: "Rejected", status: .rejected, silentFor: 30)
+        let applications = try store.applications()
 
         func companies(_ filter: ApplicationFilter) -> [String] {
             filter.narrow(applications, asOf: now, in: calendar)
