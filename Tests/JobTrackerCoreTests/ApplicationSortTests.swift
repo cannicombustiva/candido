@@ -45,16 +45,21 @@ import Testing
             try sorted(by: .status).map(\.status) == [.applied, .interviewing, .offer, .rejected])
     }
 
+    // The two date sorts deliberately disagree with each other: in each test the
+    // applied dates run one way and the last contact dates the other. A
+    // comparator wired to the wrong date column fails here rather than passing
+    // on a coincidence.
+
     @Test func sortsByLastContactOldestFirst() throws {
-        try store.application(company: "Recent", title: "R", silentFor: 1)
-        try store.application(company: "Old", title: "O", silentFor: 30)
+        try store.application(company: "Recent", title: "R", silentFor: 1, appliedDaysAgo: 50)
+        try store.application(company: "Old", title: "O", silentFor: 30, appliedDaysAgo: 31)
 
         #expect(try sorted(by: .lastContactDate).map(\.title) == ["O", "R"])
     }
 
     @Test func sortsByAppliedDateOldestFirst() throws {
-        try store.application(company: "Recent", title: "R", appliedDaysAgo: 2)
-        try store.application(company: "Old", title: "O", appliedDaysAgo: 40)
+        try store.application(company: "Recent", title: "R", silentFor: 2, appliedDaysAgo: 2)
+        try store.application(company: "Old", title: "O", silentFor: 0, appliedDaysAgo: 40)
 
         #expect(try sorted(by: .appliedDate).map(\.title) == ["O", "R"])
     }
