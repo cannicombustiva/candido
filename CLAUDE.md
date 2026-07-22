@@ -1,6 +1,13 @@
-# Job Application Tracker
+# Candido
 
 macOS SwiftUI app for tracking job applications. Local-only SwiftData.
+
+The product is called **Candido**. The code is not: the package is
+`JobTrackerCore`, the target and scheme are `JobTracker`, the bundle identifiers
+are `com.candido.JobTracker` and `com.candido.JobTracker.dev`. Only the display
+name is Candido. Do not "tidy" the identifiers to match the product name —
+the sandbox container is keyed by the bundle identifier, and changing it hides
+the owner's real applications behind a fresh empty store.
 
 ## Read SPEC.md first
 

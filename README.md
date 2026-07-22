@@ -1,8 +1,8 @@
-# Job Application Tracker
+# Candido
 
-A macOS app for tracking job applications, and the backdrop for an experiment in
-driving coding agents. It keeps one row per application, remembers when either
-side last made contact, and surfaces the ones that have gone quiet.
+Candido is a macOS app for tracking job applications, and the backdrop for an
+experiment in driving coding agents. It keeps one row per application, remembers
+when either side last made contact, and surfaces the ones that have gone quiet.
 
 Local-only SwiftData, no account, no server, no paid Apple Developer account.
 
@@ -47,6 +47,16 @@ same file. Import is manual only (`File ▸ Import…`) and never automatic, and
 importing merges — a known application id is updated in place, an unknown one is
 inserted, and a row the file does not mention is left alone. Import never
 deletes.
+
+## Candido is the product name, `JobTracker` is the code name
+
+The window, the menu bar and this README say **Candido**. The code does not, and
+that is deliberate: the package is `JobTrackerCore`, the Xcode target and scheme
+are `JobTracker`, and the bundle identifiers are `com.candido.JobTracker` and
+`com.candido.JobTracker.dev`. A sandboxed app's container is keyed by its bundle
+identifier, so renaming the identifier to match the product would point the app
+at a fresh, empty store and hide every application already tracked. The display
+name is set in `project.yml` and is the only thing Candido renamed.
 
 ## Layout
 

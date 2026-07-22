@@ -1,6 +1,13 @@
-# Job Application Tracker — Spec
+# Candido — Spec
 
-A macOS app for tracking my own job applications.
+Candido is a macOS app for tracking my own job applications.
+
+The name is the product name — what the window, the menu bar and the README
+call it. The code keeps its own names: the package is `JobTrackerCore`, the
+target and the bundle identifiers are `JobTracker` / `com.candido.JobTracker`.
+Those are deliberately not renamed — a sandboxed app's container is keyed by its
+bundle identifier, so changing it would orphan the store holding my real
+applications.
 
 **This document is the contract.** Implementation is agent-written; this file is
 hand-written and is the source of truth. When code and this document disagree,
