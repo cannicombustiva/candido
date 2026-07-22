@@ -1,4 +1,4 @@
-name: JobTracker
+name: Candido
 
 options:
   bundleIdPrefix: com.candido
@@ -7,31 +7,39 @@ options:
   createIntermediateGroups: true
 
 packages:
-  JobTrackerCore:
+  CandidoCore:
     path: .
 
 targets:
-  JobTracker:
+  Candido:
     type: application
     platform: macOS
     sources:
       - path: App
     dependencies:
-      - package: JobTrackerCore
-        product: JobTrackerCore
+      - package: CandidoCore
+        product: CandidoCore
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.candido.JobTracker
+        PRODUCT_BUNDLE_IDENTIFIER: com.candido.Candido
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES
-        # The product is called Candido; the target, the product name and the
-        # bundle identifier stay JobTracker. Renaming the identifier would key
-        # the app to a new, empty sandbox container.
+        # Do not rename PRODUCT_BUNDLE_IDENTIFIER. A sandboxed app's container
+        # is keyed by it, so a rename points the app at a fresh, empty store
+        # and hides every application already tracked. See "Appendix: the name"
+        # in SPEC.md.
+        #
+        # The two name keys are not interchangeable. CFBundleName follows
+        # PRODUCT_NAME and is what the menu bar *title* shows; CFBundleDisplayName
+        # is what the menu items, Dock and Finder show. Issue #29 was exactly
+        # that split — a menu bar reading "JobTracker" over items reading
+        # "About Candido (Dev)". Setting both explicitly keeps one `plutil -p`
+        # sufficient to check a built bundle.
         INFOPLIST_KEY_CFBundleDisplayName: Candido
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         ENABLE_HARDENED_RUNTIME: YES
-        CODE_SIGN_ENTITLEMENTS: App/JobTracker.entitlements
+        CODE_SIGN_ENTITLEMENTS: App/Candido.entitlements
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: YES
         CODE_SIGNING_ALLOWED: YES
@@ -42,5 +50,10 @@ targets:
         # the real store. Debug gets its own identifier, and therefore its own
         # container: agent runs cannot touch the owner's tracked applications.
         Debug:
-          PRODUCT_BUNDLE_IDENTIFIER: com.candido.JobTracker.dev
+          PRODUCT_BUNDLE_IDENTIFIER: com.candido.Candido.dev
+          # PRODUCT_NAME is deliberately left alone, so the Debug bundle is
+          # still Candido.app: putting "(Dev)" in PRODUCT_NAME would put spaces
+          # and parentheses into every build path. The cost is that the menu bar
+          # title, which follows CFBundleName, reads plain "Candido" in Debug
+          # too — the "(Dev)" shows in the menu items, Dock and Finder only.
           INFOPLIST_KEY_CFBundleDisplayName: Candido (Dev)

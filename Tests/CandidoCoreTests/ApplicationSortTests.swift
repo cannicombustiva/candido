@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 
-@testable import JobTrackerCore
+@testable import CandidoCore
 
 /// The table's column headers sort through these comparators. Sorting by
 /// company ignores casing, and sorting by status follows the pipeline —

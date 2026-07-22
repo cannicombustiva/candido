@@ -1,6 +1,6 @@
 import Testing
 
-@testable import JobTrackerCore
+@testable import CandidoCore
 
 /// Standing is the only classification of Status. These tests are about the
 /// classification itself, not about any Application, so they need no store.

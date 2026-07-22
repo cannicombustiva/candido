@@ -2,15 +2,14 @@ import SwiftData
 
 /// The domain layer for Candido, the job application tracker.
 ///
-/// Candido is the product name only. This module, the app target and the bundle
-/// identifiers keep the `JobTracker` names — the sandbox container is keyed by
-/// the identifier, so renaming it would orphan the owner's store.
+/// The bundle identifiers are load-bearing and must not be renamed — see
+/// "Appendix: the name" in `SPEC.md` for why.
 ///
 /// Everything with a rule in it lives here: the SwiftData models, staleness,
 /// company find-or-create, and the JSON codec. The app target holds views only.
 ///
 /// See `SPEC.md` for the behaviour this module is required to implement.
-public enum JobTrackerCore {
+public enum CandidoCore {
     public static let specVersion = 1
 
     /// Everything the store persists. The app builds its `ModelContainer` from

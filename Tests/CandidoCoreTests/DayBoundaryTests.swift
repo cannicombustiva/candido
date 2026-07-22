@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import JobTrackerCore
+@testable import CandidoCore
 
 /// Staleness answers change at local midnight and at no other moment, so a
 /// window left open overnight has to be told when the next one is. Getting
