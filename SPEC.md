@@ -24,7 +24,7 @@ eyes on the diff — see [Verification](#verification).
 | --- | --- | --- |
 | Platform | macOS, SwiftUI | Unfamiliar language is a better agent testbed — no falling back on fixing it myself |
 | Persistence | SwiftData, local only | Platform-native; no paid Apple account, so no CloudKit |
-| Structure | `JobTrackerCore` Swift package + thin app target | `swift test` runs in seconds with clean output — the agent feedback loop |
+| Structure | `CandidoCore` Swift package + thin app target | `swift test` runs in seconds with clean output — the agent feedback loop |
 | Backup | One-way JSON mirror to a user-chosen folder | Point it at Google Drive; no OAuth, no SDK, no paid account |
 
 No paid Apple Developer account. Consequences: no CloudKit sync, no
@@ -33,7 +33,7 @@ available (CloudKit would have forbidden it).
 
 ## Domain model
 
-Two `@Model` types, both in `JobTrackerCore`.
+Two `@Model` types, both in `CandidoCore`.
 
 ### Company
 
@@ -172,7 +172,7 @@ Round-trip is unit-tested: export → import → identical dataset.
 
 I do not read the code, so tests and screenshots carry the full load.
 
-- **`swift test` in `JobTrackerCore`** — the only thing between me and an app
+- **`swift test` in `CandidoCore`** — the only thing between me and an app
   that compiles while computing staleness wrong. Covers: threshold boundaries
   per status, `lastContactDate` clock, find-or-create case folding, JSON
   round-trip.
@@ -194,7 +194,7 @@ held roughly constant as backdrop.
 | M0 | **One-shot, unattended.** Whole spec, throwaway branch, walk away | Control group. Whatever it gets wrong is what the process must fix |
 | M1 | `/grill-me` → spec | This document ✅ |
 | M2 | Plan mode + `/to-tickets` | Spec becomes grabbable issues |
-| M3 | `/tdd` red-green on the domain package | `JobTrackerCore`, tested. **App in daily real use from here** |
+| M3 | `/tdd` red-green on the domain package | `CandidoCore`, tested. **App in daily real use from here** |
 | M4 | Parallel subagents, independent tracks | Export mirror ‖ `MenuBarExtra` |
 | M5 | `/code-review` + `/security-review` | Does the reviewer catch what I can't? |
 | M6 | `/loop` or scheduled agent | Background maintenance, dependency bumps |
@@ -209,14 +209,24 @@ applications tracked in it, or the later experiments have no ground truth.
 
 ## Appendix: the name
 
-The product is **Candido**. The code is not, and the mismatch is deliberate:
-the package stays `JobTrackerCore`, the target and scheme stay `JobTracker`, and
-the bundle identifiers stay `com.candido.JobTracker` and
-`com.candido.JobTracker.dev`. A sandboxed app's container is keyed by its bundle
-identifier, so renaming the identifier to match the product would point the app
-at a fresh, empty container and hide every application I have tracked. Only the
-display name is Candido.
+The product is **Candido**, and as of this amendment the code says so too: the
+package is `CandidoCore`, the target and scheme are `Candido`, and the bundle
+identifiers are `com.candido.Candido` and `com.candido.Candido.dev`.
+
+This spec previously froze the code on the old name `JobTracker` to protect the
+sandbox container: a sandboxed app's container is keyed by its bundle
+identifier, so renaming the identifier points the app at a fresh, empty
+container and hides every application already tracked. That reasoning was sound
+and still is — it simply did not apply yet. The rename landed while the Release
+container `com.candido.JobTracker` had never held a store, so there was nothing
+to migrate.
+
+That window is now closed. The identifiers above are load-bearing: once real
+applications live in the Release container, renaming again requires a container
+migration and evidence that nothing was lost. Do not "tidy" them.
+
+`dev.candido.JobTracker` belongs to the frozen M0 control run. Do not touch it.
 
 This appendix is deliberately at the end of the file: `jobtracker-yardstick`
 cites this spec by line number, and an amendment inserted above existing text
-would move every citation in the checklist.
+would move every citation in the checklist. Amend it here, in place.

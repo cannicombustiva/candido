@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 
-@testable import JobTrackerCore
+@testable import CandidoCore
 
 /// The four filters are derived from Status every time they are asked. None is
 /// a stored flag, and an Application is never "put into" one.

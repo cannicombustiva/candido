@@ -2,12 +2,13 @@
 
 macOS SwiftUI app for tracking job applications. Local-only SwiftData.
 
-The product is called **Candido**. The code is not: the package is
-`JobTrackerCore`, the target and scheme are `JobTracker`, the bundle identifiers
-are `com.candido.JobTracker` and `com.candido.JobTracker.dev`. Only the display
-name is Candido. Do not "tidy" the identifiers to match the product name —
-the sandbox container is keyed by the bundle identifier, and changing it hides
-the owner's real applications behind a fresh empty store.
+Everything is called **Candido**: the package is `CandidoCore`, the target and
+scheme are `Candido`, the bundle identifiers are `com.candido.Candido` and
+`com.candido.Candido.dev`. Do not rename the identifiers — the sandbox container
+is keyed by the bundle identifier, so changing one hides the owner's real
+applications behind a fresh empty store. This rename was safe only because it
+happened while the Release container had never held a store; the next one would
+need a migration. See "Appendix: the name" in `SPEC.md`.
 
 ## Read SPEC.md first
 
@@ -60,22 +61,22 @@ The primary checkout at `candido/` is for reading, reviewing and merging.
 branch or commit there.
 
 One thing worktrees do not isolate: every Debug build shares the bundle
-identifier `com.candido.JobTracker.dev`, so all of them read one sandbox
+identifier `com.candido.Candido.dev`, so all of them read one sandbox
 container. Launch the app from one session at a time.
 
 ## Layout
 
 ```
-Package.swift              JobTrackerCore package manifest
+Package.swift              CandidoCore package manifest
 scripts/worktree.sh        Claim a worktree for an issue (see the rule above)
-Sources/JobTrackerCore/    Domain: models, staleness, find-or-create, JSON codec
-Tests/JobTrackerCoreTests/ swift-testing tests for the above
+Sources/CandidoCore/       Domain: models, staleness, find-or-create, JSON codec
+Tests/CandidoCoreTests/    swift-testing tests for the above
 App/                       SwiftUI app target sources + entitlements
 project.yml                xcodegen spec — source of truth for the app target
 SPEC.md                    The contract
 ```
 
-`JobTracker.xcodeproj` is **generated and gitignored**. Never edit it, and never
+`Candido.xcodeproj` is **generated and gitignored**. Never edit it, and never
 hand-edit a `.pbxproj`. To change build settings, targets, or add source
 directories, edit `project.yml` and re-run `xcodegen generate`.
 
@@ -85,7 +86,7 @@ entitlements — the set the JSON backup mirror in `SPEC.md` needs.
 ## Rule: logic goes in the package, not the views
 
 Anything with a decision in it — thresholds, date maths, name matching,
-encoding — belongs in `JobTrackerCore` where `swift test` can reach it. The app
+encoding — belongs in `CandidoCore` where `swift test` can reach it. The app
 target holds views and wiring only. This split exists so the feedback loop is
 `swift test` (seconds, clean output) rather than a GUI test run.
 
@@ -105,18 +106,19 @@ Report failures plainly, with output. A skipped step must be named as skipped.
 
 ```bash
 xcodegen generate
-xcodebuild -project JobTracker.xcodeproj -scheme JobTracker \
+xcodebuild -project Candido.xcodeproj -scheme Candido \
   -configuration Debug -derivedDataPath DerivedData build
-open DerivedData/Build/Products/Debug/JobTracker.app
+open DerivedData/Build/Products/Debug/Candido.app
 screencapture -x -T 3 shot.png
-osascript -e 'tell application "JobTracker" to quit'
+osascript -e 'tell application "Candido" to quit'
 ```
 
-The Debug build has its own bundle identifier, `com.candido.JobTracker.dev`,
-and therefore its own sandbox container. The owner runs a Release build with
-their real applications in it; an agent run must never open that store. Do not
-"fix" the identifiers to match. Activate the app before capturing
-(`osascript -e 'tell application id "com.candido.JobTracker.dev" to activate'`)
+The Debug build has its own bundle identifier, `com.candido.Candido.dev`,
+and therefore its own sandbox container. The Release container is where the
+owner's real applications go once the app is in daily use from M3; an agent run
+must never open that store. Keep the Debug/Release split. Activate the app
+before capturing
+(`osascript -e 'tell application id "com.candido.Candido.dev" to activate'`)
 — `screencapture` only sees the active Space, so a fullscreen terminal hides
 the app window.
 
@@ -136,8 +138,10 @@ Two things they need are deliberately **not** in this repo:
 - **`../jobtracker-yardstick`** — the conformance checklist and the scoring
   rig. Kept separate so it cannot be edited by the runs it grades. `score/` is
   a Swift package that grades any milestone through a symlink:
-  `cd score && ln -sfn ../../candido-m0 subject && swift test`, plus
-  `score/tier-a.sh` for artifact checks. Scores land in `scores/<milestone>.md`.
+  `cd score && rm -rf .build Package.resolved && ln -sfn ../../<run> subject &&
+  swift test`, plus `score/tier-a.sh <subject>` for artifact checks. Scores land
+  in `scores/<milestone>.md`. Runs that predate the rename to `CandidoCore` —
+  M0 among them — need `YARDSTICK_PRODUCT=JobTrackerCore` set.
 - **`../candido-m0`** — the M0 control run: seeded with `SPEC.md` and nothing
   else, no CLAUDE.md, no CONTEXT.md, no ADRs. **Never edit its `SPEC.md`**, even
   to fix a typo. It is a frozen seed and the comparison depends on it.

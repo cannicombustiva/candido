@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 
-@testable import JobTrackerCore
+@testable import CandidoCore
 
 /// Staleness is the one rule the owner cannot check by looking at the app —
 /// a wrong threshold or a `>=` in place of `>` produces a screen that looks

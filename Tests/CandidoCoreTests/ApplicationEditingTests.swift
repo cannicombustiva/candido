@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 
-@testable import JobTrackerCore
+@testable import CandidoCore
 
 /// The rules editing obeys. The inspector binds Status, notes and the
 /// last-contact date straight to the model — those have no rules — so what is

@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 
-@testable import JobTrackerCore
+@testable import CandidoCore
 
 /// The clock every suite runs against.
 ///
@@ -32,7 +32,7 @@ enum TestClock {
 
 /// An empty in-memory store, and the one way tests put Applications into it.
 ///
-/// The container is built from `JobTrackerCore.models`, the same list the app
+/// The container is built from `CandidoCore.models`, the same list the app
 /// builds its own from, so the schema under test cannot drift from the shipped
 /// one. Every date it stores comes from `TestClock`.
 @MainActor
@@ -41,7 +41,7 @@ struct TestStore {
 
     init() throws {
         let container = try ModelContainer(
-            for: Schema(JobTrackerCore.models),
+            for: Schema(CandidoCore.models),
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         context = ModelContext(container)

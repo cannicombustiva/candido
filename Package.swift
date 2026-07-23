@@ -2,13 +2,13 @@
 import PackageDescription
 
 let package = Package(
-    name: "JobTrackerCore",
+    name: "CandidoCore",
     platforms: [.macOS(.v15)],
     products: [
-        .library(name: "JobTrackerCore", targets: ["JobTrackerCore"])
+        .library(name: "CandidoCore", targets: ["CandidoCore"])
     ],
     targets: [
-        .target(name: "JobTrackerCore"),
-        .testTarget(name: "JobTrackerCoreTests", dependencies: ["JobTrackerCore"]),
+        .target(name: "CandidoCore"),
+        .testTarget(name: "CandidoCoreTests", dependencies: ["CandidoCore"]),
     ]
 )

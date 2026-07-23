@@ -54,7 +54,7 @@ builds touches another session's tree. Commit and push from there, never from
 the primary checkout at $primary.
 
 Note: every build shares the one Debug bundle identifier
-(com.candido.JobTracker.dev) and therefore one sandbox container. Two sessions
+(com.candido.Candido.dev) and therefore one sandbox container. Two sessions
 running the app at once are reading the same dev store — launch one at a time.
 
 When the branch has merged:

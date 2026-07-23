@@ -1,5 +1,5 @@
 import Foundation
-import JobTrackerCore
+import CandidoCore
 import Observation
 
 /// The instant the window derives staleness against, advanced at every local

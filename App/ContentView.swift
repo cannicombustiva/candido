@@ -1,4 +1,4 @@
-import JobTrackerCore
+import CandidoCore
 import SwiftData
 import SwiftUI
 

@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 
-@testable import JobTrackerCore
+@testable import CandidoCore
 
 /// Find-or-create is the rule the unique constraint cannot express on its own:
 /// the same company typed in any casing, with any surrounding whitespace, must
