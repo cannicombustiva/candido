@@ -15,7 +15,9 @@ struct AddApplicationSheet: View {
     @State private var title = ""
     @State private var status = Status.applied
     @State private var appliedDate = Date()
-    @State private var failure: String?
+    /// The sentence shown to the owner when an add fails; nil when there is
+    /// nothing to say.
+    @State private var failureMessage: String?
 
     private var canSave: Bool {
         Application.canCreate(companyName: companyName, title: title)
@@ -37,8 +39,8 @@ struct AddApplicationSheet: View {
             }
             .formStyle(.grouped)
 
-            if let failure {
-                Text(failure).foregroundStyle(.red).font(.callout)
+            if let failureMessage {
+                Text(failureMessage).foregroundStyle(.red).font(.callout)
             }
 
             HStack {
@@ -64,9 +66,10 @@ struct AddApplicationSheet: View {
                 in: context
             )
             try context.save()
+            failureMessage = nil
             dismiss()
         } catch {
-            failure = "Could not add the application: \(error.localizedDescription)"
+            failureMessage = "Could not add the application: \(error.localizedDescription)"
         }
     }
 }
