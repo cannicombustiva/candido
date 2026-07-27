@@ -13,6 +13,13 @@ import Testing
         return calendar
     }()
 
+    /// A Today at `instant`, read in `calendar`. The suite works in whole
+    /// Todays because that is what the app schedules against: an instant is
+    /// only half a day, and which day it is decides where the boundary falls.
+    private func today(_ instant: Date, in calendar: Calendar) -> Today {
+        Today(instant: instant, calendar: calendar)
+    }
+
     private func date(
         _ calendar: Calendar,
         _ year: Int, _ month: Int, _ day: Int,
@@ -27,7 +34,7 @@ import Testing
     @Test func isTheFirstInstantOfTomorrow() {
         let now = date(london, 2026, 7, 21, 12)
 
-        #expect(DayBoundary.next(after: now, in: london) == date(london, 2026, 7, 22))
+        #expect(DayBoundary.next(after: today(now, in: london)) == date(london, 2026, 7, 22))
     }
 
     /// Standing exactly on a boundary, the next one is tomorrow's — never the
@@ -36,15 +43,15 @@ import Testing
     @Test func isNeverTheInstantItIsAskedAbout() {
         let midnight = date(london, 2026, 7, 21)
 
-        #expect(DayBoundary.next(after: midnight, in: london) == date(london, 2026, 7, 22))
-        #expect(DayBoundary.next(after: midnight, in: london) > midnight)
+        #expect(DayBoundary.next(after: today(midnight, in: london)) == date(london, 2026, 7, 22))
+        #expect(DayBoundary.next(after: today(midnight, in: london)) > midnight)
     }
 
     @Test func isOneSecondAwayAtTheLastSecondOfTheDay() {
         let now = date(london, 2026, 7, 21, 23, 59, 59)
 
-        #expect(DayBoundary.next(after: now, in: london) == date(london, 2026, 7, 22))
-        #expect(DayBoundary.secondsUntilNext(after: now, in: london) == 1)
+        #expect(DayBoundary.next(after: today(now, in: london)) == date(london, 2026, 7, 22))
+        #expect(DayBoundary.secondsUntilNext(after: today(now, in: london)) == 1)
     }
 
     /// The owner's timezone decides, not the machine's or UTC's. At 23:00 in
@@ -55,11 +62,11 @@ import Testing
         tokyo.timeZone = TimeZone(identifier: "Asia/Tokyo")!
         let now = date(london, 2026, 7, 21, 23)
 
-        #expect(DayBoundary.next(after: now, in: london) == date(london, 2026, 7, 22))
-        #expect(DayBoundary.next(after: now, in: tokyo) == date(tokyo, 2026, 7, 23))
+        #expect(DayBoundary.next(after: today(now, in: london)) == date(london, 2026, 7, 22))
+        #expect(DayBoundary.next(after: today(now, in: tokyo)) == date(tokyo, 2026, 7, 23))
         #expect(
-            DayBoundary.next(after: now, in: tokyo)
-                > DayBoundary.next(after: now, in: london))
+            DayBoundary.next(after: today(now, in: tokyo))
+                > DayBoundary.next(after: today(now, in: london)))
     }
 
     /// A spring-forward day is 23 hours long, and the boundary must land on the
@@ -68,9 +75,9 @@ import Testing
     @Test func lands23HoursLaterAcrossASpringForward() {
         let now = date(london, 2026, 3, 29, 12)
 
-        #expect(DayBoundary.next(after: now, in: london) == date(london, 2026, 3, 30))
+        #expect(DayBoundary.next(after: today(now, in: london)) == date(london, 2026, 3, 30))
         #expect(
-            DayBoundary.secondsUntilNext(after: date(london, 2026, 3, 29), in: london)
+            DayBoundary.secondsUntilNext(after: today(date(london, 2026, 3, 29), in: london))
                 == 23 * 3600)
     }
 
@@ -78,7 +85,7 @@ import Testing
     /// fire an hour early here and an hour late in March.
     @Test func lands25HoursLaterAcrossAFallBack() {
         #expect(
-            DayBoundary.secondsUntilNext(after: date(london, 2026, 10, 25), in: london)
+            DayBoundary.secondsUntilNext(after: today(date(london, 2026, 10, 25), in: london))
                 == 25 * 3600)
     }
 
@@ -91,7 +98,7 @@ import Testing
         saoPaulo.timeZone = TimeZone(identifier: "America/Sao_Paulo")!
         let now = date(saoPaulo, 2018, 11, 3, 12)
 
-        let boundary = DayBoundary.next(after: now, in: saoPaulo)
+        let boundary = DayBoundary.next(after: today(now, in: saoPaulo))
 
         #expect(boundary == date(saoPaulo, 2018, 11, 4, 1))
         #expect(saoPaulo.component(.day, from: boundary) == 4)
@@ -103,7 +110,7 @@ import Testing
     func isAlwaysAheadOfTheInstantItIsAskedAbout(hour: Int) {
         let now = date(london, 2026, 10, 25, hour, 30)
 
-        #expect(DayBoundary.next(after: now, in: london) > now)
-        #expect(DayBoundary.secondsUntilNext(after: now, in: london) > 0)
+        #expect(DayBoundary.next(after: today(now, in: london)) > now)
+        #expect(DayBoundary.secondsUntilNext(after: today(now, in: london)) > 0)
     }
 }

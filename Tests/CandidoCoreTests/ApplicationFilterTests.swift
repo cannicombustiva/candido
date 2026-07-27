@@ -12,8 +12,7 @@ import Testing
 /// and is not restated.
 @MainActor
 @Suite struct ApplicationFilterTests {
-    private let calendar = TestClock.calendar
-    private let now = TestClock.now
+    private let today = TestClock.today
     private let store: TestStore
 
     init() throws {
@@ -44,23 +43,23 @@ import Testing
     func allContainsEveryStatus(_ status: Status) throws {
         let application = try application(status, silentFor: 3)
 
-        #expect(ApplicationFilter.all.contains(application, asOf: now, in: calendar))
+        #expect(ApplicationFilter.all.contains(application, asOf: today))
     }
 
     @Test(arguments: [Status.applied, .screening, .interviewing, .offer])
     func activeContainsEveryStatusThatIsNotTerminal(_ status: Status) throws {
         let application = try application(status, silentFor: 3)
 
-        #expect(ApplicationFilter.active.contains(application, asOf: now, in: calendar))
-        #expect(!ApplicationFilter.archived.contains(application, asOf: now, in: calendar))
+        #expect(ApplicationFilter.active.contains(application, asOf: today))
+        #expect(!ApplicationFilter.archived.contains(application, asOf: today))
     }
 
     @Test(arguments: [Status.rejected, .withdrawn])
     func archivedContainsExactlyTheTerminalStatuses(_ status: Status) throws {
         let application = try application(status, silentFor: 3)
 
-        #expect(ApplicationFilter.archived.contains(application, asOf: now, in: calendar))
-        #expect(!ApplicationFilter.active.contains(application, asOf: now, in: calendar))
+        #expect(ApplicationFilter.archived.contains(application, asOf: today))
+        #expect(!ApplicationFilter.active.contains(application, asOf: today))
     }
 
     // MARK: - Stale is always a subset of Active
@@ -75,10 +74,10 @@ import Testing
         let quiet = try application(.applied, silentFor: 22)
         let recentlyContacted = try application(.applied, silentFor: 21)
 
-        #expect(ApplicationFilter.stale.contains(quiet, asOf: now, in: calendar))
-        #expect(ApplicationFilter.active.contains(quiet, asOf: now, in: calendar))
-        #expect(!ApplicationFilter.stale.contains(recentlyContacted, asOf: now, in: calendar))
-        #expect(ApplicationFilter.active.contains(recentlyContacted, asOf: now, in: calendar))
+        #expect(ApplicationFilter.stale.contains(quiet, asOf: today))
+        #expect(ApplicationFilter.active.contains(quiet, asOf: today))
+        #expect(!ApplicationFilter.stale.contains(recentlyContacted, asOf: today))
+        #expect(ApplicationFilter.active.contains(recentlyContacted, asOf: today))
     }
 
     /// A Terminal Application never awaits their reply, so however long the
@@ -87,7 +86,7 @@ import Testing
     func staleNeverContainsAStatusThatDoesNotAwaitTheirReply(_ status: Status) throws {
         let application = try application(status, silentFor: 500)
 
-        #expect(!ApplicationFilter.stale.contains(application, asOf: now, in: calendar))
+        #expect(!ApplicationFilter.stale.contains(application, asOf: today))
     }
 
     /// The invariant, stated directly: anything Stale is also Active, for every
@@ -96,8 +95,8 @@ import Testing
         for status in Status.allCases {
             for days in [0, 10, 11, 14, 15, 21, 22, 500] {
                 let application = try application(status, silentFor: days)
-                if ApplicationFilter.stale.contains(application, asOf: now, in: calendar) {
-                    #expect(ApplicationFilter.active.contains(application, asOf: now, in: calendar))
+                if ApplicationFilter.stale.contains(application, asOf: today) {
+                    #expect(ApplicationFilter.active.contains(application, asOf: today))
                 }
             }
         }
@@ -109,13 +108,13 @@ import Testing
     /// filters purely by having its Status changed.
     @Test func movesBetweenFiltersWhenTheStatusChanges() throws {
         let application = try application(.interviewing, silentFor: 3)
-        #expect(ApplicationFilter.active.contains(application, asOf: now, in: calendar))
-        #expect(!ApplicationFilter.archived.contains(application, asOf: now, in: calendar))
+        #expect(ApplicationFilter.active.contains(application, asOf: today))
+        #expect(!ApplicationFilter.archived.contains(application, asOf: today))
 
         application.status = .rejected
 
-        #expect(!ApplicationFilter.active.contains(application, asOf: now, in: calendar))
-        #expect(ApplicationFilter.archived.contains(application, asOf: now, in: calendar))
+        #expect(!ApplicationFilter.active.contains(application, asOf: today))
+        #expect(ApplicationFilter.archived.contains(application, asOf: today))
     }
 
     // MARK: - Narrowing a list
@@ -127,7 +126,7 @@ import Testing
         let applications = try store.applications()
 
         func companies(_ filter: ApplicationFilter) -> [String] {
-            filter.narrow(applications, asOf: now, in: calendar)
+            filter.narrow(applications, asOf: today)
                 .map(\.company.name)
                 .sorted()
         }

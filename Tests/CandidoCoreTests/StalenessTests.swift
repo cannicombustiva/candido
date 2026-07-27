@@ -9,8 +9,7 @@ import Testing
 /// entirely plausible and is wrong.
 @MainActor
 @Suite struct StalenessTests {
-    private let calendar = TestClock.calendar
-    private let now = TestClock.now
+    private let today = TestClock.today
     private let store: TestStore
 
     init() throws {
@@ -51,7 +50,7 @@ import Testing
 
         let application = try application(status, lastContact: 500)
 
-        #expect(!application.isStale(asOf: now, in: calendar))
+        #expect(!application.isStale(asOf: today))
     }
 
     // MARK: - The boundary, per status
@@ -67,10 +66,10 @@ import Testing
         #expect(status.standing == .awaitingTheirReply(silenceTolerated: threshold))
 
         let atThreshold = try application(status, lastContact: threshold)
-        #expect(!atThreshold.isStale(asOf: now, in: calendar))
+        #expect(!atThreshold.isStale(asOf: today))
 
         let dayBefore = try application(status, lastContact: threshold - 1)
-        #expect(!dayBefore.isStale(asOf: now, in: calendar))
+        #expect(!dayBefore.isStale(asOf: today))
     }
 
     @Test(arguments: [
@@ -81,7 +80,7 @@ import Testing
     func isStaleOneDayPastItsThreshold(status: Status, days: Int) throws {
         let application = try application(status, lastContact: days)
 
-        #expect(application.isStale(asOf: now, in: calendar))
+        #expect(application.isStale(asOf: today))
     }
 
     /// The thresholds differ on purpose — silence after a final interview is
@@ -90,10 +89,10 @@ import Testing
     @Test func appliesADifferentThresholdPerStatus() throws {
         let days = 15
 
-        #expect(!(try application(.applied, lastContact: days).isStale(asOf: now, in: calendar)))
-        #expect(try application(.screening, lastContact: days).isStale(asOf: now, in: calendar))
+        #expect(!(try application(.applied, lastContact: days).isStale(asOf: today)))
+        #expect(try application(.screening, lastContact: days).isStale(asOf: today))
         #expect(
-            try application(.interviewing, lastContact: days).isStale(asOf: now, in: calendar))
+            try application(.interviewing, lastContact: days).isStale(asOf: today))
     }
 
     // MARK: - Calendar days, not elapsed time
@@ -105,21 +104,22 @@ import Testing
         let morning = try application(.applied, lastContact: 22, atHour: 9)
         let night = try application(.applied, lastContact: 22, atHour: 22)
 
-        #expect(morning.isStale(asOf: now, in: calendar))
-        #expect(night.isStale(asOf: now, in: calendar))
+        #expect(morning.isStale(asOf: today))
+        #expect(night.isStale(asOf: today))
         #expect(
-            morning.daysOfSilence(asOf: now, in: calendar)
-                == night.daysOfSilence(asOf: now, in: calendar))
+            morning.daysOfSilence(asOf: today)
+                == night.daysOfSilence(asOf: today))
     }
 
     /// Contact late yesterday and "now" early today is one calendar day of
     /// silence, not zero, however few hours have actually elapsed.
     @Test func countsTheBoundaryCrossedAtMidnight() throws {
         let lateYesterday = try application(.applied, lastContact: 1, atHour: 23)
-        let earlyThisMorning = calendar.date(
-            bySettingHour: 1, minute: 0, second: 0, of: now)!
+        let earlyThisMorning = TestClock.today(
+            at: today.calendar.date(
+                bySettingHour: 1, minute: 0, second: 0, of: today.instant)!)
 
-        #expect(lateYesterday.daysOfSilence(asOf: earlyThisMorning, in: calendar) == 1)
+        #expect(lateYesterday.daysOfSilence(asOf: earlyThisMorning) == 1)
     }
 
     /// Spanning a spring-forward loses an hour of elapsed time. Counting
@@ -128,13 +128,16 @@ import Testing
     /// deviation ADR 0001 says a future reader is most likely to introduce.
     ///
     /// The dates here are absolute rather than counted back from
-    /// `TestClock.now`, because the clock change is the thing under test.
+    /// `TestClock.today`, because the clock change is the thing under test.
+    /// They are still read in the pinned calendar, so the transition asserted
+    /// is London's and not the machine's.
     @Test func isUnaffectedByADaylightSavingTransition() throws {
         // Europe/London moves to BST on 29 March 2026.
-        let beforeTheClockChange = calendar.date(
+        let beforeTheClockChange = today.calendar.date(
             from: DateComponents(year: 2026, month: 3, day: 25, hour: 12))!
-        let afterTheClockChange = calendar.date(
-            from: DateComponents(year: 2026, month: 4, day: 5, hour: 12))!
+        let afterTheClockChange = TestClock.today(
+            at: today.calendar.date(
+                from: DateComponents(year: 2026, month: 4, day: 5, hour: 12))!)
         let application = try Application.create(
             companyNamed: "Spotify",
             title: "iOS Engineer",
@@ -144,16 +147,15 @@ import Testing
             in: store.context
         )
 
-        #expect(
-            application.daysOfSilence(asOf: afterTheClockChange, in: calendar) == 11)
-        #expect(application.isStale(asOf: afterTheClockChange, in: calendar))
+        #expect(application.daysOfSilence(asOf: afterTheClockChange) == 11)
+        #expect(application.isStale(asOf: afterTheClockChange))
     }
 
     @Test func countsTodayAsNoSilenceAtAll() throws {
         let contactedToday = try application(.applied, lastContact: 0, atHour: 8)
 
-        #expect(contactedToday.daysOfSilence(asOf: now, in: calendar) == 0)
-        #expect(!contactedToday.isStale(asOf: now, in: calendar))
+        #expect(contactedToday.daysOfSilence(asOf: today) == 0)
+        #expect(!contactedToday.isStale(asOf: today))
     }
 
     // MARK: - The clock runs from the last contact
@@ -164,8 +166,8 @@ import Testing
         let application = try application(
             .interviewing, lastContact: 1, appliedDaysAgo: 60)
 
-        #expect(!application.isStale(asOf: now, in: calendar))
-        #expect(application.daysOfSilence(asOf: now, in: calendar) == 1)
+        #expect(!application.isStale(asOf: today))
+        #expect(application.daysOfSilence(asOf: today) == 1)
     }
 
     /// And the reverse: a fresh application whose silence has run long is
@@ -173,6 +175,6 @@ import Testing
     @Test func goesStaleOnSilenceAloneWhateverTheAppliedDate() throws {
         let application = try application(.interviewing, lastContact: 11)
 
-        #expect(application.isStale(asOf: now, in: calendar))
+        #expect(application.isStale(asOf: today))
     }
 }
