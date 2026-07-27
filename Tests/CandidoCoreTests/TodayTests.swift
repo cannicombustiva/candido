@@ -113,17 +113,17 @@ private let hostileZones = [
     @Test(arguments: [0, 1, 10, 14, 21, 22, 60])
     func countsTheSameDaysOfSilenceAsThePairItReplaces(days: Int) throws {
         let application = try store.application(silentFor: days)
-        let today = Today(instant: TestClock.now, calendar: TestClock.calendar)
+        let today = TestClock.today
 
         #expect(application.daysOfSilence(asOf: today) == days)
         #expect(
             application.daysOfSilence(asOf: today)
-                == application.daysOfSilence(asOf: TestClock.now, in: TestClock.calendar))
+                == application.daysOfSilence(asOf: today.instant, in: today.calendar))
     }
 
     @Test(arguments: [ApplicationFilter.all, .active, .stale, .archived])
     func narrowsTheSameWayAsThePairItReplaces(filter: ApplicationFilter) throws {
-        let today = Today(instant: TestClock.now, calendar: TestClock.calendar)
+        let today = TestClock.today
         try store.application(company: "Spotify", status: .applied, silentFor: 30)
         try store.application(company: "Monzo", status: .offer, silentFor: 90)
         try store.application(company: "Deliveroo", status: .rejected, silentFor: 2)
@@ -131,7 +131,7 @@ private let hostileZones = [
 
         #expect(
             filter.narrow(applications, asOf: today).map(\.id)
-                == filter.narrow(applications, asOf: TestClock.now, in: TestClock.calendar)
+                == filter.narrow(applications, asOf: today.instant, in: today.calendar)
                     .map(\.id))
     }
 

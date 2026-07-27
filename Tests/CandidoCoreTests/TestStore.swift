@@ -4,28 +4,42 @@ import Testing
 
 @testable import CandidoCore
 
-/// The clock every suite runs against.
+/// The day every suite derives against.
 ///
 /// Staleness counts calendar days in the local timezone
 /// (`docs/adr/0001-calendar-days-for-staleness.md`), so a suite that used the
 /// machine's calendar and a real "now" would be asserting something different
 /// depending on where the machine is standing and what time it is run. Both are
 /// pinned here, once, so every suite means the same thing on every machine.
+///
+/// They are pinned as a single `Today` rather than as an instant and a calendar
+/// side by side, because that pair is exactly the shape the app no longer has:
+/// two members that must agree, with nothing making them. A suite holding the
+/// pair could pass the instant to one entry point and the calendar to another
+/// and never notice.
 enum TestClock {
-    static let calendar: Calendar = {
+    /// Midday on a fixed date, in a pinned calendar. Nothing in staleness may
+    /// depend on the hour, and several tests prove it by varying the hour
+    /// around this.
+    static let today: Today = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Europe/London")!
-        return calendar
+        let instant = calendar.date(
+            from: DateComponents(year: 2026, month: 7, day: 21, hour: 12))!
+        return Today(instant: instant, calendar: calendar)
     }()
 
-    /// Midday on a fixed date. Nothing in staleness may depend on the hour,
-    /// and several tests prove it by varying the hour around this.
-    static let now: Date = calendar.date(
-        from: DateComponents(year: 2026, month: 7, day: 21, hour: 12))!
+    /// A different instant read in the same pinned calendar — for the suites
+    /// where the moment being derived against is itself the thing under test,
+    /// such as the two sides of a daylight-saving change.
+    static func today(at instant: Date) -> Today {
+        Today(instant: instant, calendar: today.calendar)
+    }
 
-    /// A moment `daysAgo` calendar days before `now`, at the given hour.
+    /// A moment `daysAgo` calendar days before `today`, at the given hour.
     static func date(daysAgo: Int, atHour hour: Int = 12) -> Date {
-        let day = calendar.date(byAdding: .day, value: -daysAgo, to: now)!
+        let calendar = today.calendar
+        let day = calendar.date(byAdding: .day, value: -daysAgo, to: today.instant)!
         return calendar.date(bySettingHour: hour, minute: 0, second: 0, of: day)!
     }
 }
@@ -48,7 +62,7 @@ struct TestStore {
     }
 
     /// Adds an Application that has been silent for `days` calendar days as of
-    /// `TestClock.now`.
+    /// `TestClock.today`.
     ///
     /// `appliedDaysAgo` defaults to the same day as the last contact, which is
     /// what `Application.create` itself does. Pass it only when the two dates

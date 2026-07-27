@@ -10,8 +10,7 @@ import Testing
 /// and a posting URL the owner types as text.
 @MainActor
 @Suite struct ApplicationEditingTests {
-    private let calendar = TestClock.calendar
-    private let now = TestClock.now
+    private let today = TestClock.today
     private let store: TestStore
 
     init() throws {
@@ -149,21 +148,21 @@ import Testing
     /// reset.
     @Test func movingTheLastContactDateForwardClearsStaleness() throws {
         let application = try store.application(silentFor: 60)
-        #expect(application.isStale(asOf: now, in: calendar))
+        #expect(application.isStale(asOf: today))
 
-        application.lastContactDate = now
+        application.lastContactDate = today.instant
 
-        #expect(!application.isStale(asOf: now, in: calendar))
+        #expect(!application.isStale(asOf: today))
     }
 
     /// Archiving is not a separate act: it is what a Terminal Status means.
     @Test func changingTheStatusToATerminalOneArchivesTheApplication() throws {
         let application = try application()
-        #expect(ApplicationFilter.active.narrow([application], asOf: now, in: calendar).count == 1)
+        #expect(ApplicationFilter.active.narrow([application], asOf: today).count == 1)
 
         application.status = .rejected
 
-        #expect(ApplicationFilter.archived.narrow([application], asOf: now, in: calendar).count == 1)
-        #expect(ApplicationFilter.active.narrow([application], asOf: now, in: calendar).isEmpty)
+        #expect(ApplicationFilter.archived.narrow([application], asOf: today).count == 1)
+        #expect(ApplicationFilter.active.narrow([application], asOf: today).isEmpty)
     }
 }
