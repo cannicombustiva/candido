@@ -95,16 +95,24 @@ final class BackupFolder {
         guard panel.runModal() == .OK, let chosen = panel.url else { return false }
 
         do {
-            let bookmark = try chosen.bookmarkData(
-                options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
-            defaults.set(bookmark, forKey: Self.bookmarkKey)
-            url = chosen
+            defaults.set(try bookmark(for: chosen), forKey: Self.bookmarkKey)
             problem = nil
-            return true
+            // Deliberately not `url = chosen`: the folder is used through the
+            // bookmark from here on, and the very first write should go
+            // through the same route as every write after a relaunch. A route
+            // only the second launch takes is a route only the owner tests.
+            resolveSavedFolder()
+            return isChosen
         } catch {
             report(.folderUnreachable(error.localizedDescription))
             return false
         }
+    }
+
+    /// Puts the alert away. The dismissing is here rather than in the view so
+    /// there is one way to clear a problem, not one per button.
+    func dismissProblem() {
+        problem = nil
     }
 
     // MARK: Writing
@@ -163,11 +171,16 @@ final class BackupFolder {
         guard url.startAccessingSecurityScopedResource() else { return }
         defer { url.stopAccessingSecurityScopedResource() }
 
-        if let bookmark = try? url.bookmarkData(
-            options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
-        {
-            defaults.set(bookmark, forKey: Self.bookmarkKey)
+        if let refreshed = try? bookmark(for: url) {
+            defaults.set(refreshed, forKey: Self.bookmarkKey)
         }
+    }
+
+    /// What is stored instead of a path: a sandboxed app's permission to reach
+    /// this folder again after it has quit.
+    private func bookmark(for url: URL) throws -> Data {
+        try url.bookmarkData(
+            options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
     }
 
     /// Failures are surfaced, never swallowed: backups that stopped silently

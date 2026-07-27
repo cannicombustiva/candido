@@ -16,7 +16,7 @@ final class BackupMirror {
     let folder: BackupFolder
 
     private let context: ModelContext
-    private var pendingWrite: Task<Void, Never>?
+    private let quietPeriod = QuietPeriod()
     /// Held only so the subscription stays alive. There is one mirror and it
     /// lives as long as the app does, so it is never unsubscribed.
     @ObservationIgnored private var observer: (any NSObjectProtocol)?
@@ -39,18 +39,12 @@ final class BackupMirror {
         if folder.choose() { writeNow() }
     }
 
-    /// Waits for the store to go quiet, then writes. A later change during the
-    /// wait replaces this write rather than adding one, so a burst of edits
-    /// produces a single file.
+    /// Waits for the store to go quiet, then writes — so a burst of edits
+    /// produces a single file. The waiting rule itself lives in `QuietPeriod`,
+    /// where the tests can drive it.
     private func scheduleWrite() {
         guard folder.isChosen else { return }
-
-        pendingWrite?.cancel()
-        pendingWrite = Task { [weak self] in
-            try? await Task.sleep(for: BackupSnapshot.quietPeriod)
-            guard !Task.isCancelled else { return }
-            self?.writeNow()
-        }
+        quietPeriod.whenSettled { [weak self] in self?.writeNow() }
     }
 
     /// Reads the whole store and writes it out. Nothing leaves the app before

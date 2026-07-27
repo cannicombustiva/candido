@@ -32,11 +32,11 @@ extension View {
             "Your backup has stopped",
             isPresented: Binding(
                 get: { folder.problem != nil },
-                set: { if !$0 { folder.problem = nil } }
+                set: { if !$0 { folder.dismissProblem() } }
             ),
             presenting: folder.problem
         ) { _ in
-            Button("OK", role: .cancel) { folder.problem = nil }
+            Button("OK", role: .cancel) {}
         } message: { problem in
             Text(
                 [problem.errorDescription, problem.recoverySuggestion]

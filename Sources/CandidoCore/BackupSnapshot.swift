@@ -46,16 +46,8 @@ public struct BackupSnapshot: Equatable, Codable, Sendable {
     /// the last one rather than leaving the folder to accumulate snapshots.
     public static let fileName = "candido-backup.json"
 
-    /// How long the store has to sit still before a backup is written.
-    ///
-    /// Typing a note is dozens of changes; each one is not a backup. Two
-    /// seconds is long enough that a burst of edits collapses into a single
-    /// write, and short enough that the file is current by the time the owner
-    /// has looked away.
-    public static let quietPeriod: Duration = .seconds(2)
-
-    public init(specVersion: Int = CandidoCore.specVersion, companies: [CompanyRecord]) {
-        self.specVersion = specVersion
+    public init(companies: [CompanyRecord]) {
+        self.specVersion = CandidoCore.specVersion
         self.companies = companies
     }
 
