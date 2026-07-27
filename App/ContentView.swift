@@ -15,11 +15,12 @@ struct ContentView: View {
 
     /// Advances at local midnight, so a window left open overnight re-derives
     /// staleness instead of showing yesterday's answer. Read by the filter and
-    /// by the date column alike — one instant, so they cannot disagree.
+    /// by the date column alike — one Today, instant and calendar together, so
+    /// they cannot disagree about what day it is or which timezone it is in.
     @State private var day = DayClock()
 
     private var visibleApplications: [Application] {
-        filter.narrow(applications, asOf: day.now).sorted(using: sortOrder)
+        filter.narrow(applications, asOf: day.today).sorted(using: sortOrder)
     }
 
     /// The selected row's Application, or `nil` when nothing is selected.
@@ -36,7 +37,7 @@ struct ContentView: View {
         } detail: {
             ApplicationTable(
                 applications: visibleApplications,
-                asOf: day.now,
+                today: day.today,
                 sortOrder: $sortOrder,
                 selection: $selection
             )
@@ -106,21 +107,21 @@ extension ApplicationFilter {
 /// forget those companies exist.
 private struct LastContactCell: View {
     let application: Application
-    /// Passed in rather than read as `Date()` here: the sidebar filter narrows
-    /// against one instant, and a cell that asked the clock for itself could
-    /// style a row the Stale filter had not yet picked up.
-    let now: Date
+    /// Passed in rather than built here: the sidebar filter narrows against one
+    /// Today, and a cell that read the clock — or named a calendar — for itself
+    /// could style a row the Stale filter had not yet picked up.
+    let today: Today
 
     var body: some View {
         Text(application.lastContactDate, format: .dateTime.day().month(.abbreviated).year())
             .foregroundStyle(
-                application.isStale(asOf: now) ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
+                application.isStale(asOf: today) ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
     }
 }
 
 private struct ApplicationTable: View {
     let applications: [Application]
-    let asOf: Date
+    let today: Today
     @Binding var sortOrder: [ApplicationComparator]
     @Binding var selection: Application.ID?
 
@@ -141,7 +142,7 @@ private struct ApplicationTable: View {
             TableColumn(
                 "Last contact", sortUsing: ApplicationSortField.lastContactDate.comparator()
             ) { application in
-                LastContactCell(application: application, now: asOf)
+                LastContactCell(application: application, today: today)
             }
         }
         .overlay {
