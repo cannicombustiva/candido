@@ -8,10 +8,16 @@ extension Application {
     /// arbitrary time of day decide outcomes, and put two applications
     /// contacted on the same afternoon on opposite sides of the boundary. See
     /// `docs/adr/0001-calendar-days-for-staleness.md`.
+    public func daysOfSilence(asOf today: Today) -> Int {
+        today.daysSince(lastContactDate)
+    }
+
+    /// The `(asOf:, in:)` form, kept while callers move onto `Today`.
+    ///
+    /// It defers to the `Today` form rather than counting days itself, so the
+    /// two cannot answer differently while both exist.
     public func daysOfSilence(asOf now: Date = Date(), in calendar: Calendar = .current) -> Int {
-        let lastContactDay = calendar.startOfDay(for: lastContactDate)
-        let today = calendar.startOfDay(for: now)
-        return calendar.dateComponents([.day], from: lastContactDay, to: today).day ?? 0
+        daysOfSilence(asOf: Today(instant: now, calendar: calendar))
     }
 
     /// Whether this Application awaits their reply and has been silent longer
@@ -27,8 +33,13 @@ extension Application {
     ///
     /// The boundary is strict. At exactly the threshold the Application is not
     /// yet Stale; one day later it is.
-    public func isStale(asOf now: Date = Date(), in calendar: Calendar = .current) -> Bool {
+    public func isStale(asOf today: Today) -> Bool {
         guard case .awaitingTheirReply(let tolerated) = status.standing else { return false }
-        return daysOfSilence(asOf: now, in: calendar) > tolerated
+        return daysOfSilence(asOf: today) > tolerated
+    }
+
+    /// The `(asOf:, in:)` form, kept while callers move onto `Today`.
+    public func isStale(asOf now: Date = Date(), in calendar: Calendar = .current) -> Bool {
+        isStale(asOf: Today(instant: now, calendar: calendar))
     }
 }

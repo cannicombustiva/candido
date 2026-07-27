@@ -20,20 +20,32 @@ public enum DayBoundary {
     ///
     /// Always strictly later than `now`, including when `now` is itself a
     /// boundary — a timer scheduled on the present instant would spin.
-    public static func next(after now: Date, in calendar: Calendar = .current) -> Date {
-        let today = calendar.startOfDay(for: now)
-        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) else {
+    /// Scheduling reads its calendar from the same value the answers are
+    /// derived against, so the window cannot wake at one day's boundary and
+    /// then re-derive against another's.
+    public static func next(after today: Today) -> Date {
+        let calendar = today.calendar
+        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: today.startOfDay) else {
             // `.day` arithmetic on a valid date does not fail; falling forward
             // a fixed day is a last resort that keeps the timer in the future.
-            return now.addingTimeInterval(24 * 3600)
+            return today.instant.addingTimeInterval(24 * 3600)
         }
         return calendar.startOfDay(for: tomorrow)
     }
 
-    /// Seconds from `now` until the day next turns over. Always positive.
+    /// Seconds until the day next turns over. Always positive.
+    public static func secondsUntilNext(after today: Today) -> TimeInterval {
+        next(after: today).timeIntervalSince(today.instant)
+    }
+
+    /// The `(after:, in:)` forms, kept while callers move onto `Today`.
+    public static func next(after now: Date, in calendar: Calendar = .current) -> Date {
+        next(after: Today(instant: now, calendar: calendar))
+    }
+
     public static func secondsUntilNext(
         after now: Date, in calendar: Calendar = .current
     ) -> TimeInterval {
-        next(after: now, in: calendar).timeIntervalSince(now)
+        secondsUntilNext(after: Today(instant: now, calendar: calendar))
     }
 }

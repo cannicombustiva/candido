@@ -29,6 +29,14 @@ Status allows. A property of the present moment only — never recorded, never
 historical.
 _Avoid_: Ghosted, overdue, cold, dormant
 
+**Today**:
+The day the window is deriving against: an instant, plus the calendar that
+instant is read in. Every derived answer is relative to it, and it moves at
+local midnight. The calendar is part of it, not context around it — the same
+instant is two different days in two timezones, so an instant alone does not
+name a day.
+_Avoid_: Now, current date, clock
+
 **Days of silence**:
 The count of calendar days, in the owner's local timezone, between the last
 contact and today. Not elapsed hours — time of day never affects whether an
