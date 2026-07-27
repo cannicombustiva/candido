@@ -41,23 +41,4 @@ public enum ApplicationFilter: String, CaseIterable, Identifiable, Sendable {
     public func narrow(_ applications: [Application], asOf today: Today) -> [Application] {
         applications.filter { contains($0, asOf: today) }
     }
-
-    /// The `(asOf:, in:)` forms, kept while callers move onto `Today`. They
-    /// defer to the `Today` forms, so the two cannot narrow differently while
-    /// both exist.
-    public func contains(
-        _ application: Application,
-        asOf now: Date = Date(),
-        in calendar: Calendar = .current
-    ) -> Bool {
-        contains(application, asOf: Today(instant: now, calendar: calendar))
-    }
-
-    public func narrow(
-        _ applications: [Application],
-        asOf now: Date = Date(),
-        in calendar: Calendar = .current
-    ) -> [Application] {
-        narrow(applications, asOf: Today(instant: now, calendar: calendar))
-    }
 }

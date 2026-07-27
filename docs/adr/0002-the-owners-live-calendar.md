@@ -41,10 +41,9 @@ most one boundary behind after a change, and re-derives correctly from then on.
 Waking on timezone-change notifications is a possible future refinement, not a
 correctness gap in the day maths.
 
-Nothing should ever take the calendar from a default again. The `(asOf:, in:)`
-entry points still carry `= .current` defaults and outlive this decision by one
-ticket — no production code calls them any more, and deleting them is #27. Until
-then they are the one remaining way back into the divergence, and no new caller
-should use them. Tests state their calendar rather than accepting a default;
-`TodayTests` asserts the claim across timezones spread far enough apart that no
-machine calendar could stand in for all of them.
+Nothing can take the calendar from a default any more. The `(asOf:, in:)` entry
+points and their `= .current` defaults were deleted in #27, so there is no way
+to supply the instant and leave the calendar implicit — the attempt is a compile
+error rather than a silent divergence. Tests state their calendar rather than
+accepting a default; `TodayTests` asserts the claim across timezones spread far
+enough apart that no machine calendar could stand in for all of them.

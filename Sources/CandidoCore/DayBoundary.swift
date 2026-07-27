@@ -37,15 +37,4 @@ public enum DayBoundary {
     public static func secondsUntilNext(after today: Today) -> TimeInterval {
         next(after: today).timeIntervalSince(today.instant)
     }
-
-    /// The `(after:, in:)` forms, kept while callers move onto `Today`.
-    public static func next(after now: Date, in calendar: Calendar = .current) -> Date {
-        next(after: Today(instant: now, calendar: calendar))
-    }
-
-    public static func secondsUntilNext(
-        after now: Date, in calendar: Calendar = .current
-    ) -> TimeInterval {
-        secondsUntilNext(after: Today(instant: now, calendar: calendar))
-    }
 }
