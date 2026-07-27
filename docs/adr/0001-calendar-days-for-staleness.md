@@ -15,6 +15,8 @@ same day always go stale on the same day regardless of the hour.
 The cost is timezone dependence: travelling can move a row across the boundary a
 day early or late. That is acceptable for a personal tracker, and strictly better
 than staleness flipping mid-afternoon because of a timestamp the owner never saw.
+Which timezone that is — the live one, following the machine — is
+`docs/adr/0002-the-owners-live-calendar.md`.
 
 The obvious implementation — subtracting two `Date`s, or `timeIntervalSince` —
 gives elapsed time and is **wrong**. This is the deviation a future reader is
