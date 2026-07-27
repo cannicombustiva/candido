@@ -26,32 +26,41 @@ import Observation
 final class DayClock {
     private(set) var today: Today
 
-    @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private var advance: Task<Void, Never>?
 
+    /// One Today in, one Today published, and the calendar is only ever the one
+    /// inside it — there is no second copy for the two to drift apart.
+    ///
     /// `autoupdatingCurrent` on purpose: this calendar outlives every boundary
     /// it schedules, and an owner who changes timezone should get their new
     /// midnight, not the one they flew out of. Because every Today the window
     /// sees is built here, that live calendar is also the one every answer is
     /// derived in. See `docs/adr/0002-the-owners-live-calendar.md`.
-    init(calendar: Calendar = .autoupdatingCurrent, now: Date = Date()) {
-        self.calendar = calendar
-        self.today = Today(instant: now, calendar: calendar)
+    init(today: Today = Today(instant: Date(), calendar: .autoupdatingCurrent)) {
+        self.today = today
         advance = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
-                // Read afresh rather than reusing the published Today: that one
-                // dates from the last wake, and the machine may have slept
-                // through several boundaries since.
-                let scheduling = Today(instant: Date(), calendar: self.calendar)
+                // The instant is read afresh rather than reused: the published
+                // Today dates from the last wake, and the machine may have
+                // slept through several boundaries since. The calendar comes
+                // from that same Today, so the boundary is scheduled in the
+                // calendar the answers are derived in.
+                let scheduling = self.reading()
                 do {
-                    try await Task.sleep(for: .seconds(DayBoundary.secondsUntilNext(after: scheduling)))
+                    try await Task.sleep(
+                        for: .seconds(DayBoundary.secondsUntilNext(after: scheduling)))
                 } catch {
                     return  // Cancelled.
                 }
-                self.today = Today(instant: Date(), calendar: self.calendar)
+                self.today = self.reading()
             }
         }
+    }
+
+    /// The wall clock now, in the calendar this clock is already keeping.
+    private func reading() -> Today {
+        Today(instant: Date(), calendar: today.calendar)
     }
 
     deinit {

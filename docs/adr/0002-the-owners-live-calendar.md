@@ -41,7 +41,10 @@ most one boundary behind after a change, and re-derives correctly from then on.
 Waking on timezone-change notifications is a possible future refinement, not a
 correctness gap in the day maths.
 
-Tests must never accept a calendar default in place of a stated one. Suites pass
-a Today built from an explicit calendar; `TodayTests` asserts the claim across
-timezones spread far enough apart that no machine calendar could stand in for
-all of them.
+Nothing should ever take the calendar from a default again. The `(asOf:, in:)`
+entry points still carry `= .current` defaults and outlive this decision by one
+ticket — no production code calls them any more, and deleting them is #27. Until
+then they are the one remaining way back into the divergence, and no new caller
+should use them. Tests state their calendar rather than accepting a default;
+`TodayTests` asserts the claim across timezones spread far enough apart that no
+machine calendar could stand in for all of them.

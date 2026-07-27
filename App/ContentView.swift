@@ -37,7 +37,7 @@ struct ContentView: View {
         } detail: {
             ApplicationTable(
                 applications: visibleApplications,
-                asOf: day.today,
+                today: day.today,
                 sortOrder: $sortOrder,
                 selection: $selection
             )
@@ -121,7 +121,7 @@ private struct LastContactCell: View {
 
 private struct ApplicationTable: View {
     let applications: [Application]
-    let asOf: Today
+    let today: Today
     @Binding var sortOrder: [ApplicationComparator]
     @Binding var selection: Application.ID?
 
@@ -142,7 +142,7 @@ private struct ApplicationTable: View {
             TableColumn(
                 "Last contact", sortUsing: ApplicationSortField.lastContactDate.comparator()
             ) { application in
-                LastContactCell(application: application, today: asOf)
+                LastContactCell(application: application, today: today)
             }
         }
         .overlay {
