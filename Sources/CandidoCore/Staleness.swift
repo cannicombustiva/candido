@@ -12,14 +12,6 @@ extension Application {
         today.daysSince(lastContactDate)
     }
 
-    /// The `(asOf:, in:)` form, kept while callers move onto `Today`.
-    ///
-    /// It defers to the `Today` form rather than counting days itself, so the
-    /// two cannot answer differently while both exist.
-    public func daysOfSilence(asOf now: Date = Date(), in calendar: Calendar = .current) -> Int {
-        daysOfSilence(asOf: Today(instant: now, calendar: calendar))
-    }
-
     /// Whether this Application awaits their reply and has been silent longer
     /// than its Status allows.
     ///
@@ -36,10 +28,5 @@ extension Application {
     public func isStale(asOf today: Today) -> Bool {
         guard case .awaitingTheirReply(let tolerated) = status.standing else { return false }
         return daysOfSilence(asOf: today) > tolerated
-    }
-
-    /// The `(asOf:, in:)` form, kept while callers move onto `Today`.
-    public func isStale(asOf now: Date = Date(), in calendar: Calendar = .current) -> Bool {
-        isStale(asOf: Today(instant: now, calendar: calendar))
     }
 }

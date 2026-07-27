@@ -108,31 +108,12 @@ private let hostileZones = [
 
     // MARK: - The entry points accept it
 
-    /// Days of silence counted against a Today match the same count against the
-    /// pair it replaces. Signatures move; the answers do not.
+    /// Days of silence counted against a Today are the days that were seeded.
     @Test(arguments: [0, 1, 10, 14, 21, 22, 60])
-    func countsTheSameDaysOfSilenceAsThePairItReplaces(days: Int) throws {
+    func countsDaysOfSilenceAgainstOneToday(days: Int) throws {
         let application = try store.application(silentFor: days)
-        let today = TestClock.today
 
-        #expect(application.daysOfSilence(asOf: today) == days)
-        #expect(
-            application.daysOfSilence(asOf: today)
-                == application.daysOfSilence(asOf: today.instant, in: today.calendar))
-    }
-
-    @Test(arguments: [ApplicationFilter.all, .active, .stale, .archived])
-    func narrowsTheSameWayAsThePairItReplaces(filter: ApplicationFilter) throws {
-        let today = TestClock.today
-        try store.application(company: "Spotify", status: .applied, silentFor: 30)
-        try store.application(company: "Monzo", status: .offer, silentFor: 90)
-        try store.application(company: "Deliveroo", status: .rejected, silentFor: 2)
-        let applications = try store.applications()
-
-        #expect(
-            filter.narrow(applications, asOf: today).map(\.id)
-                == filter.narrow(applications, asOf: today.instant, in: today.calendar)
-                    .map(\.id))
+        #expect(application.daysOfSilence(asOf: TestClock.today) == days)
     }
 
     /// `DayBoundary` keeps both its guarantees when handed a Today: the day's
