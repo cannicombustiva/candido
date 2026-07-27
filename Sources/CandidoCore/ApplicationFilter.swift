@@ -28,25 +28,36 @@ public enum ApplicationFilter: String, CaseIterable, Identifiable, Sendable {
     }
 
     /// Whether this Application belongs in this filter right now.
-    public func contains(
-        _ application: Application,
-        asOf now: Date = Date(),
-        in calendar: Calendar = .current
-    ) -> Bool {
+    public func contains(_ application: Application, asOf today: Today) -> Bool {
         switch self {
         case .all: true
         case .active: !application.status.isTerminal
-        case .stale: application.isStale(asOf: now, in: calendar)
+        case .stale: application.isStale(asOf: today)
         case .archived: application.status.isTerminal
         }
     }
 
     /// The Applications from this list that belong in this filter.
+    public func narrow(_ applications: [Application], asOf today: Today) -> [Application] {
+        applications.filter { contains($0, asOf: today) }
+    }
+
+    /// The `(asOf:, in:)` forms, kept while callers move onto `Today`. They
+    /// defer to the `Today` forms, so the two cannot narrow differently while
+    /// both exist.
+    public func contains(
+        _ application: Application,
+        asOf now: Date = Date(),
+        in calendar: Calendar = .current
+    ) -> Bool {
+        contains(application, asOf: Today(instant: now, calendar: calendar))
+    }
+
     public func narrow(
         _ applications: [Application],
         asOf now: Date = Date(),
         in calendar: Calendar = .current
     ) -> [Application] {
-        applications.filter { contains($0, asOf: now, in: calendar) }
+        narrow(applications, asOf: Today(instant: now, calendar: calendar))
     }
 }
