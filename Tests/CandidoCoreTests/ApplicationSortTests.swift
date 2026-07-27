@@ -70,4 +70,27 @@ import Testing
 
         #expect(try sorted(by: .title).map(\.title) == ["Android Engineer", "backend engineer"])
     }
+
+    /// Every declared field must actually order the rows — a column that sorts
+    /// by nothing is the failure this project can least afford, because the
+    /// table still renders and the rows are simply wrong.
+    ///
+    /// These three Applications are built so that each field puts them in a
+    /// different order. A field that compares nothing falls straight through to
+    /// the company tie-break, so its ordering comes out identical to the
+    /// company column's and the count of distinct orderings drops.
+    @Test func everyFieldOrdersTheRowsItsOwnWay() throws {
+        try store.application(
+            company: "a", title: "b", status: .offer, silentFor: 1, appliedDaysAgo: 30)
+        try store.application(
+            company: "b", title: "a", status: .interviewing, silentFor: 9, appliedDaysAgo: 10)
+        try store.application(
+            company: "c", title: "c", status: .applied, silentFor: 5, appliedDaysAgo: 20)
+
+        let orderings = try ApplicationSortField.allCases.map { field in
+            try sorted(by: field).map(\.company.name)
+        }
+
+        #expect(Set(orderings).count == ApplicationSortField.allCases.count)
+    }
 }
