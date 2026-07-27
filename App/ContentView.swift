@@ -119,29 +119,41 @@ private struct LastContactCell: View {
     }
 }
 
+extension TableColumn where RowValue == Application, Sort == ApplicationComparator, Label == Text {
+    /// A column headed and sorted by one sort field — the heading and the
+    /// comparator come from the same declaration, so they cannot drift apart.
+    fileprivate init(
+        _ field: ApplicationSortField,
+        @ViewBuilder content: @escaping (Application) -> Content
+    ) {
+        self.init(field.columnTitle, sortUsing: field.comparator(), content: content)
+    }
+}
+
 private struct ApplicationTable: View {
     let applications: [Application]
     let today: Today
     @Binding var sortOrder: [ApplicationComparator]
     @Binding var selection: Application.ID?
 
+    /// Each column names one sort field and takes both its heading and its
+    /// comparator from it, so the view cannot label a column one thing and
+    /// sort it by another. What the field orders on is the package's decision.
     var body: some View {
         Table(applications, selection: $selection, sortOrder: $sortOrder) {
-            TableColumn("Company", sortUsing: ApplicationSortField.company.comparator()) {
+            TableColumn(ApplicationSortField.company) {
                 Text($0.company.name)
             }
-            TableColumn("Title", sortUsing: ApplicationSortField.title.comparator()) {
+            TableColumn(ApplicationSortField.title) {
                 Text($0.title)
             }
-            TableColumn("Status", sortUsing: ApplicationSortField.status.comparator()) {
+            TableColumn(ApplicationSortField.status) {
                 Text($0.status.displayName)
             }
-            TableColumn("Applied", sortUsing: ApplicationSortField.appliedDate.comparator()) {
+            TableColumn(ApplicationSortField.appliedDate) {
                 Text($0.appliedDate, format: .dateTime.day().month(.abbreviated).year())
             }
-            TableColumn(
-                "Last contact", sortUsing: ApplicationSortField.lastContactDate.comparator()
-            ) { application in
+            TableColumn(ApplicationSortField.lastContactDate) { application in
                 LastContactCell(application: application, today: today)
             }
         }
