@@ -147,6 +147,49 @@ struct BackupImportTests {
         #expect(companies.first?.applications.count == 2)
     }
 
+    @Test("A Company the merge emptied does not linger")
+    func clearsAwayACompanyLeftWithNothing() throws {
+        let store = try TestStore()
+        let existing = try store.application(company: "Spotify", title: "iOS Engineer")
+        let file = BackupSnapshot(companies: [
+            .init(name: "Monzo", applications: [.stub(id: existing.id, title: "iOS Engineer")])
+        ])
+
+        try file.merge(into: store.context)
+
+        #expect(try store.context.fetch(FetchDescriptor<Company>()).map(\.name) == ["Monzo"])
+    }
+
+    @Test("A Company that still has an Application is kept")
+    func keepsACompanyThatStillHasWork() throws {
+        let store = try TestStore()
+        let moving = try store.application(company: "Spotify", title: "iOS Engineer")
+        try store.application(company: "Spotify", title: "Android Engineer")
+        let file = BackupSnapshot(companies: [
+            .init(name: "Monzo", applications: [.stub(id: moving.id, title: "iOS Engineer")])
+        ])
+
+        try file.merge(into: store.context)
+
+        let companies = try store.context.fetch(FetchDescriptor<Company>())
+        #expect(companies.map(\.name).sorted() == ["Monzo", "Spotify"])
+        #expect(try store.applications().count == 2)
+    }
+
+    @Test("Clearing away an emptied Company deletes no Application")
+    func clearingAwayACompanyLosesNoWork() throws {
+        let store = try TestStore()
+        let existing = try store.application(company: "Spotify", title: "iOS Engineer")
+        let file = BackupSnapshot(companies: [
+            .init(name: "Monzo", applications: [.stub(id: existing.id, title: "iOS Engineer")])
+        ])
+
+        try file.merge(into: store.context)
+
+        #expect(try store.applications().map(\.title) == ["iOS Engineer"])
+        #expect(try store.applications().first?.company.name == "Monzo")
+    }
+
     // MARK: Idempotence
 
     @Test("Importing the same file twice leaves the store identical after the second import")

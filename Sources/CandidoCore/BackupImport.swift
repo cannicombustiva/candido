@@ -75,6 +75,9 @@ extension BackupSnapshot {
     public func merge(into context: ModelContext) throws -> ImportSummary {
         var known = try knownApplications(in: context)
         var summary = ImportSummary(inserted: 0, updated: 0, skipped: 0)
+        /// Companies an Application was moved off. Whether they are empty can
+        /// only be asked once every row has been placed.
+        var vacated: [Company] = []
 
         for companyRecord in companies {
             // A company with no name identifies nothing, so nothing filed under
@@ -94,6 +97,7 @@ extension BackupSnapshot {
                 }
 
                 if let existing = known[record.id] {
+                    if existing.company !== company { vacated.append(existing.company) }
                     existing.update(from: record, at: company)
                     summary.updated += 1
                 } else {
@@ -106,7 +110,27 @@ extension BackupSnapshot {
             }
         }
 
+        clearAway(vacated, in: context)
         return summary
+    }
+
+    /// Drops the Companies a merge left holding nothing.
+    ///
+    /// This is not the deleting the spec forbids. What must never disappear is
+    /// work: an Application the file did not mention. A Company is not work —
+    /// it is never managed directly, exists only because something was applied
+    /// for there, and once the last Application has moved away it appears in no
+    /// screen and in no filter. Left in place it would still be written to
+    /// every backup from then on, so the file slowly fills with names of
+    /// companies nothing was ever applied for.
+    ///
+    /// A Company that still holds an Application is kept, which is the whole
+    /// check — the cascade delete rule means dropping one that did not would
+    /// take Applications with it.
+    private func clearAway(_ vacated: [Company], in context: ModelContext) {
+        for company in vacated where company.applications.isEmpty {
+            context.delete(company)
+        }
     }
 
     /// Everything already in the store, by the id a merge matches on. Read once
