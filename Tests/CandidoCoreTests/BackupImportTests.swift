@@ -21,7 +21,7 @@ struct BackupImportTests {
 
         let summary = try file.merge(into: store.context)
 
-        #expect(summary == .init(inserted: 1, updated: 0))
+        #expect(summary == .init(inserted: 1, updated: 0, skipped: 0))
         #expect(try store.applications().map(\.title) == ["Platform Engineer"])
     }
 
@@ -69,7 +69,7 @@ struct BackupImportTests {
 
         let summary = try file.merge(into: store.context)
 
-        #expect(summary == .init(inserted: 0, updated: 1))
+        #expect(summary == .init(inserted: 0, updated: 1, skipped: 0))
         #expect(try store.applications().count == 1)
         #expect(existing.title == "Senior iOS Engineer")
         #expect(existing.status == .offer)
@@ -126,7 +126,7 @@ struct BackupImportTests {
 
         let summary = try BackupSnapshot(companies: []).merge(into: store.context)
 
-        #expect(summary == .init(inserted: 0, updated: 0))
+        #expect(summary == .init(inserted: 0, updated: 0, skipped: 0))
         #expect(try store.applications().count == 1)
     }
 
@@ -163,7 +163,7 @@ struct BackupImportTests {
 
         let summary = try file.merge(into: store.context)
 
-        #expect(summary == .init(inserted: 0, updated: 2))
+        #expect(summary == .init(inserted: 0, updated: 2, skipped: 0))
         #expect(try BackupSnapshot(of: store.context) == afterFirst)
     }
 
@@ -194,12 +194,12 @@ struct BackupImportTests {
     @Test(
         "The report says what happened, and always that nothing was deleted",
         arguments: [
-            (BackupSnapshot.ImportSummary(inserted: 0, updated: 0), "nothing changed"),
-            (.init(inserted: 1, updated: 0), "1 application added"),
-            (.init(inserted: 3, updated: 0), "3 applications added"),
-            (.init(inserted: 0, updated: 1), "1 application already here was"),
-            (.init(inserted: 0, updated: 2), "2 applications already here were"),
-            (.init(inserted: 2, updated: 1), "2 applications added and 1 application"),
+            (BackupSnapshot.ImportSummary(inserted: 0, updated: 0, skipped: 0), "nothing changed"),
+            (.init(inserted: 1, updated: 0, skipped: 0), "1 application added"),
+            (.init(inserted: 3, updated: 0, skipped: 0), "3 applications added"),
+            (.init(inserted: 0, updated: 1, skipped: 0), "1 application already here was"),
+            (.init(inserted: 0, updated: 2, skipped: 0), "2 applications already here were"),
+            (.init(inserted: 2, updated: 1, skipped: 0), "2 applications added and 1 application"),
         ]
     )
     func reportsWhatItDid(summary: BackupSnapshot.ImportSummary, phrase: String) {
@@ -207,10 +207,10 @@ struct BackupImportTests {
         #expect(summary.sentence.contains("deleted") || summary.inserted + summary.updated == 0)
     }
 
-    // MARK: Refusing a file rather than half-importing it
+    // MARK: Skipping a bad row rather than refusing the file
 
-    @Test("A file naming an Application with no title is refused whole")
-    func refusesABlankTitleWithoutImportingAnything() throws {
+    @Test("A row with no title is skipped, and the rest of the file still lands")
+    func skipsABlankTitleAndImportsTheRest() throws {
         let store = try TestStore()
         let file = BackupSnapshot(companies: [
             .init(
@@ -219,22 +219,41 @@ struct BackupImportTests {
             )
         ])
 
-        #expect(throws: ApplicationInputError.blankTitle) { try file.merge(into: store.context) }
-        #expect(try store.applications().isEmpty)
+        let summary = try file.merge(into: store.context)
+
+        #expect(summary == .init(inserted: 1, updated: 0, skipped: 1))
+        #expect(try store.applications().map(\.title) == ["Platform Engineer"])
     }
 
-    @Test("A file naming a company with no name is refused whole")
-    func refusesABlankCompanyNameWithoutImportingAnything() throws {
+    @Test("Rows filed under a company with no name are skipped, and the rest still lands")
+    func skipsABlankCompanyNameAndImportsTheRest() throws {
         let store = try TestStore()
         let file = BackupSnapshot(companies: [
             .init(name: "Monzo", applications: [.stub(title: "Platform Engineer")]),
-            .init(name: " ", applications: [.stub(title: "iOS Engineer")]),
+            .init(
+                name: " ",
+                applications: [.stub(title: "iOS Engineer"), .stub(title: "Android Engineer")]
+            ),
         ])
 
-        #expect(throws: ApplicationInputError.blankCompanyName) {
-            try file.merge(into: store.context)
-        }
-        #expect(try store.applications().isEmpty)
+        let summary = try file.merge(into: store.context)
+
+        #expect(summary == .init(inserted: 1, updated: 0, skipped: 2))
+        #expect(try store.applications().map(\.title) == ["Platform Engineer"])
+        #expect(try store.context.fetch(FetchDescriptor<Company>()).map(\.name) == ["Monzo"])
+    }
+
+    @Test("A skipped row is not silent — the report says how many went by")
+    func saysHowManyRowsWereSkipped() {
+        #expect(
+            BackupSnapshot.ImportSummary(inserted: 1, updated: 0, skipped: 1).sentence
+                == "1 application added. Nothing already here was changed, and nothing was deleted. 1 application in the file had no title or no company name and was skipped."
+        )
+        #expect(
+            BackupSnapshot.ImportSummary(inserted: 0, updated: 0, skipped: 2).sentence.contains(
+                "2 applications in the file had no title or no company name and were skipped."
+            )
+        )
     }
 }
 

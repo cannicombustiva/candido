@@ -11,6 +11,12 @@ extension BackupSnapshot {
         /// Applications already in the store, refreshed from the file.
         public var updated: Int
 
+        /// Rows in the file that could not become an Application — no title, or
+        /// filed under a company with no name. They are passed over rather than
+        /// taken as a reason to refuse the file, so one damaged row cannot cost
+        /// the owner every good row alongside it.
+        public var skipped: Int
+
         /// What the import did, in the owner's terms — the whole body of the
         /// dialog they read afterwards.
         ///
@@ -20,9 +26,13 @@ extension BackupSnapshot {
         /// failed, so this sentence is the only evidence the owner gets, and it
         /// is the kind of thing `swift test` should be able to read.
         public var sentence: String {
+            [outcome, skippedNote].compactMap { $0 }.joined(separator: " ")
+        }
+
+        private var outcome: String {
             switch (inserted, updated) {
             case (0, 0):
-                "That file had nothing in it, so nothing changed."
+                "Nothing in that file was new, so nothing changed."
             case (0, _):
                 "\(applications(updated)) already here \(updated == 1 ? "was" : "were") brought up to date. Nothing was added, and nothing was deleted."
             case (_, 0):
@@ -30,6 +40,14 @@ extension BackupSnapshot {
             default:
                 "\(applications(inserted)) added and \(applications(updated)) brought up to date. Nothing was deleted."
             }
+        }
+
+        /// Said out loud when rows were passed over: the owner has to be able to
+        /// tell an import that took everything from one that quietly did not.
+        private var skippedNote: String? {
+            guard skipped > 0 else { return nil }
+            return
+                "\(applications(skipped)) in the file had no title or no company name and \(skipped == 1 ? "was" : "were") skipped."
         }
 
         private func applications(_ count: Int) -> String {
@@ -49,20 +67,32 @@ extension BackupSnapshot {
     /// Companies resolve through the same find-or-create the add sheet uses, so
     /// `"spotify"` in a file joins an existing `"Spotify"`.
     ///
-    /// The whole file is checked before a single row is touched, so a file with
-    /// a bad row anywhere in it imports nothing rather than half of itself.
-    /// Saving is left to the caller.
+    /// A row the store could not hold — no title, or filed under a company with
+    /// no name — is passed over and counted, not treated as a reason to refuse
+    /// the file: one damaged row must not cost the owner every good row beside
+    /// it. Saving is left to the caller.
     @discardableResult
     public func merge(into context: ModelContext) throws -> ImportSummary {
-        try validate()
-
         var known = try knownApplications(in: context)
-        var summary = ImportSummary(inserted: 0, updated: 0)
+        var summary = ImportSummary(inserted: 0, updated: 0, skipped: 0)
 
         for companyRecord in companies {
+            // A company with no name identifies nothing, so nothing filed under
+            // it can be placed — its rows go by together.
+            guard Company.isKeepableName(companyRecord.name) else {
+                summary.skipped += companyRecord.applications.count
+                continue
+            }
             let company = try Company.findOrCreate(named: companyRecord.name, in: context)
 
             for record in companyRecord.applications {
+                // A row with no title is one the owner could not pick out of
+                // the table afterwards.
+                guard Application.isKeepableTitle(record.title) else {
+                    summary.skipped += 1
+                    continue
+                }
+
                 if let existing = known[record.id] {
                     existing.update(from: record, at: company)
                     summary.updated += 1
@@ -77,21 +107,6 @@ extension BackupSnapshot {
         }
 
         return summary
-    }
-
-    /// Refuses a file that would put a row in the store the owner cannot use —
-    /// before anything is inserted, because a half-applied import is the one
-    /// outcome worse than a refused one.
-    private func validate() throws {
-        for company in companies {
-            _ = try Company.normalize(company.name)
-
-            for application in company.applications {
-                guard Application.isKeepableTitle(application.title) else {
-                    throw ApplicationInputError.blankTitle
-                }
-            }
-        }
     }
 
     /// Everything already in the store, by the id a merge matches on. Read once
