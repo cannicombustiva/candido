@@ -41,9 +41,18 @@ most one boundary behind after a change, and re-derives correctly from then on.
 Waking on timezone-change notifications is a possible future refinement, not a
 correctness gap in the day maths.
 
-Nothing can take the calendar from a default any more. The `(asOf:, in:)` entry
-points and their `= .current` defaults were deleted in #27, so there is no way
-to supply the instant and leave the calendar implicit — the attempt is a compile
-error rather than a silent divergence. Tests state their calendar rather than
-accepting a default; `TodayTests` asserts the claim across timezones spread far
-enough apart that no machine calendar could stand in for all of them.
+No entry point can let the calendar fall back to a default on its own. The
+`(asOf:, in:)` entry points and their `= .current` defaults were deleted in #27,
+so there is no way to supply the instant and leave the calendar implicit — the
+attempt is a compile error rather than a silent divergence.
+
+The hazard is the calendar defaulting *separately* from the instant, which is
+the shape that caused #23. A default that supplies both together is a different
+thing and is permitted: `DayClock.init` defaults its whole `Today` parameter,
+and the instant and the calendar inside it cannot diverge, because they arrive
+as one value. The forbidden parameter list is the one that takes the instant
+and lets the calendar go missing.
+
+Tests state their calendar rather than accepting a default; `TodayTests` asserts
+the claim across timezones spread far enough apart that no machine calendar
+could stand in for all of them.
