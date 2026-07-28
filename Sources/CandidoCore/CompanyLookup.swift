@@ -29,9 +29,15 @@ extension Company {
     /// Interior spacing is deliberately left alone — `"Some Company"` and
     /// `"SomeCompany"` are two different names.
     static func normalize(_ name: String) throws -> String {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else { throw ApplicationInputError.blankCompanyName }
-        return trimmed.lowercased()
+        guard isKeepableName(name) else { throw ApplicationInputError.blankCompanyName }
+        return name.trimmed.lowercased()
+    }
+
+    /// A name with something in it. One rule, obeyed wherever a company name
+    /// arrives: a name of only spaces would fold to `""` and collide with every
+    /// other empty name, so it identifies nothing.
+    static func isKeepableName(_ name: String) -> Bool {
+        !name.trimmed.isEmpty
     }
 
     /// Returns the Company this name refers to, creating it if this is the

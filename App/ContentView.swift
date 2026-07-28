@@ -13,6 +13,11 @@ struct ContentView: View {
     @State private var isAddingApplication = false
     @State private var filter = ApplicationFilter.all
 
+    /// The Application the owner has asked to delete, held until they confirm.
+    /// Deleting is the one thing here with no undo, so it is never one
+    /// keystroke away from done.
+    @State private var applicationToDelete: Application?
+
     /// Advances at local midnight, so a window left open overnight re-derives
     /// staleness instead of showing yesterday's answer. Read by the filter and
     /// by the date column alike — one Today, instant and calendar together, so
@@ -39,7 +44,8 @@ struct ContentView: View {
                 applications: visibleApplications,
                 today: day.today,
                 sortOrder: $sortOrder,
-                selection: $selection
+                selection: $selection,
+                delete: { applicationToDelete = $0 }
             )
             .navigationTitle(filter.displayName)
             .inspector(isPresented: .constant(true)) {
@@ -71,7 +77,46 @@ struct ContentView: View {
         .sheet(isPresented: $isAddingApplication) {
             AddApplicationSheet()
         }
+        .confirmDeletion(of: $applicationToDelete) { application in
+            application.remove(from: context)
+            selection = nil
+        }
+        // What the File menu's Delete would act on right now. Nothing selected
+        // publishes nothing, and the menu item greys out.
+        .focusedValue(
+            \.deleteApplicationRequest,
+            selectedApplication.map { application in { applicationToDelete = application } }
+        )
         .frame(minWidth: 820, minHeight: 420)
+    }
+}
+
+extension View {
+    /// Asks before deleting, and names what is about to go.
+    ///
+    /// There is no undo and no trash: the row is the owner's record of having
+    /// applied somewhere, and the only protection against losing one to a
+    /// mis-hit Delete key is being asked first, in words naming the actual row.
+    fileprivate func confirmDeletion(
+        of application: Binding<Application?>,
+        delete: @escaping (Application) -> Void
+    ) -> some View {
+        confirmationDialog(
+            application.wrappedValue.map { "Delete \($0.title) at \($0.company.name)?" } ?? "",
+            isPresented: Binding(
+                get: { application.wrappedValue != nil },
+                set: { if !$0 { application.wrappedValue = nil } }
+            ),
+            presenting: application.wrappedValue
+        ) { presented in
+            Button("Delete", role: .destructive) {
+                delete(presented)
+                application.wrappedValue = nil
+            }
+            Button("Cancel", role: .cancel) { application.wrappedValue = nil }
+        } message: { _ in
+            Text("This cannot be undone.")
+        }
     }
 }
 
@@ -136,6 +181,10 @@ private struct ApplicationTable: View {
     @Binding var sortOrder: [ApplicationComparator]
     @Binding var selection: Application.ID?
 
+    /// Asks for a row to be deleted. The table never deletes anything itself —
+    /// it raises the question, and the window puts it to the owner.
+    let delete: (Application) -> Void
+
     /// Each column names one sort field and takes both its heading and its
     /// comparator from it, so the view cannot label a column one thing and
     /// sort it by another. What the field orders on is the package's decision.
@@ -155,6 +204,17 @@ private struct ApplicationTable: View {
             }
             TableColumn(ApplicationSortField.lastContactDate) { application in
                 LastContactCell(application: application, today: today)
+            }
+        }
+        .contextMenu(forSelectionType: Application.ID.self) { ids in
+            // One row at a time: deleting several at once is a bigger promise
+            // than one confirmation can honestly name.
+            if let id = ids.first, ids.count == 1,
+                let application = applications.first(where: { $0.id == id })
+            {
+                Button("Delete Application…", role: .destructive) {
+                    delete(application)
+                }
             }
         }
         .overlay {

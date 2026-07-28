@@ -65,6 +65,23 @@ A Status the Application does not move on from: `rejected` or `withdrawn`.
 Its Standing is Over.
 _Avoid_: Closed, finished, dead
 
+### Leaving the store
+
+**Delete**:
+The one act that destroys work: the owner removes an Application, and it is
+gone. There is no undo and no trash, so it is always asked about first, in
+words naming the row. Deleting is not archiving — an Archived Application is
+still tracked, a deleted one no longer exists.
+_Avoid_: Remove, discard, trash, archive
+
+**Cleared away**:
+What happens to a Company left holding nothing — by a Delete, or by an Import
+filing its last Application under a different Company. A Company is not work:
+it is never managed directly, exists only because something was applied for
+there, and once empty it appears in no view while still being written to every
+backup. One that still holds an Application is never cleared away.
+_Avoid_: Deleted, pruned, orphaned, garbage collected
+
 ### Views
 
 The four ways the Application list is narrowed. All are derived from Status —
