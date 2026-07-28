@@ -75,6 +75,21 @@ struct BackupImportTests {
         #expect(existing.status == .offer)
     }
 
+    @Test("The day an Application was sent is never rewritten by a file")
+    func keepsTheAppliedDateOfAKnownApplication() throws {
+        let store = try TestStore()
+        let existing = try store.application(silentFor: 5, appliedDaysAgo: 40)
+        let applied = existing.appliedDate
+        let file = BackupSnapshot(companies: [
+            .init(name: "Spotify", applications: [.stub(id: existing.id, silentFor: 1)])
+        ])
+
+        try file.merge(into: store.context)
+
+        #expect(existing.appliedDate == applied)
+        #expect(existing.lastContactDate == TestClock.date(daysAgo: 1))
+    }
+
     @Test("An Application that changed company in the file is reattached, not duplicated")
     func movesAKnownApplicationToItsCompanyInTheFile() throws {
         let store = try TestStore()
@@ -172,6 +187,24 @@ struct BackupImportTests {
         try BackupSnapshot(json: exported.json()).merge(into: destination.context)
 
         #expect(try BackupSnapshot(of: destination.context) == exported)
+    }
+
+    // MARK: What the owner is told afterwards
+
+    @Test(
+        "The report says what happened, and always that nothing was deleted",
+        arguments: [
+            (BackupSnapshot.ImportSummary(inserted: 0, updated: 0), "nothing changed"),
+            (.init(inserted: 1, updated: 0), "1 application added"),
+            (.init(inserted: 3, updated: 0), "3 applications added"),
+            (.init(inserted: 0, updated: 1), "1 application already here was"),
+            (.init(inserted: 0, updated: 2), "2 applications already here were"),
+            (.init(inserted: 2, updated: 1), "2 applications added and 1 application"),
+        ]
+    )
+    func reportsWhatItDid(summary: BackupSnapshot.ImportSummary, phrase: String) {
+        #expect(summary.sentence.contains(phrase))
+        #expect(summary.sentence.contains("deleted") || summary.inserted + summary.updated == 0)
     }
 
     // MARK: Refusing a file rather than half-importing it

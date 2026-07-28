@@ -149,24 +149,3 @@ final class BackupImporter {
         NSLog("Candido import: %@", problem.errorDescription ?? "unknown problem")
     }
 }
-
-extension BackupSnapshot.ImportSummary {
-    /// What the import did, in the owner's terms. Reads as a sentence because
-    /// it is the whole body of a dialog.
-    var sentence: String {
-        switch (inserted, updated) {
-        case (0, 0):
-            "That file had nothing in it, so nothing changed."
-        case (0, _):
-            "\(count(updated)) already here \(updated == 1 ? "was" : "were") brought up to date. Nothing was added, and nothing was deleted."
-        case (_, 0):
-            "\(count(inserted)) added. Nothing already here was changed, and nothing was deleted."
-        default:
-            "\(count(inserted)) added and \(count(updated)) brought up to date. Nothing was deleted."
-        }
-    }
-
-    private func count(_ n: Int) -> String {
-        "\(n) application\(n == 1 ? "" : "s")"
-    }
-}

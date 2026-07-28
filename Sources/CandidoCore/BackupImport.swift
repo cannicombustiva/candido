@@ -10,6 +10,31 @@ extension BackupSnapshot {
 
         /// Applications already in the store, refreshed from the file.
         public var updated: Int
+
+        /// What the import did, in the owner's terms — the whole body of the
+        /// dialog they read afterwards.
+        ///
+        /// It is here rather than in the view because it decides things: which
+        /// of four things happened, and how to count them. An import that
+        /// recognised every row leaves the table looking exactly like one that
+        /// failed, so this sentence is the only evidence the owner gets, and it
+        /// is the kind of thing `swift test` should be able to read.
+        public var sentence: String {
+            switch (inserted, updated) {
+            case (0, 0):
+                "That file had nothing in it, so nothing changed."
+            case (0, _):
+                "\(applications(updated)) already here \(updated == 1 ? "was" : "were") brought up to date. Nothing was added, and nothing was deleted."
+            case (_, 0):
+                "\(applications(inserted)) added. Nothing already here was changed, and nothing was deleted."
+            default:
+                "\(applications(inserted)) added and \(applications(updated)) brought up to date. Nothing was deleted."
+            }
+        }
+
+        private func applications(_ count: Int) -> String {
+            "\(count) application\(count == 1 ? "" : "s")"
+        }
     }
 
     /// Merges this file into the store.
@@ -45,7 +70,7 @@ extension BackupSnapshot {
                     // Kept in `known` so a file that names one id twice updates
                     // that row rather than inserting a second one and tripping
                     // the unique constraint on the way to the disk.
-                    known[record.id] = record.inserted(at: company, into: context)
+                    known[record.id] = record.insert(at: company, into: context)
                     summary.inserted += 1
                 }
             }
@@ -81,7 +106,7 @@ extension BackupSnapshot {
 extension BackupSnapshot.ApplicationRecord {
     /// Adds this record to the store as a new Application, keeping its id — the
     /// id is what makes the next import of the same file a no-op.
-    fileprivate func inserted(at company: Company, into context: ModelContext) -> Application {
+    fileprivate func insert(at company: Company, into context: ModelContext) -> Application {
         let application = Application(
             id: id,
             company: company,
@@ -98,14 +123,17 @@ extension BackupSnapshot.ApplicationRecord {
 }
 
 extension Application {
-    /// Takes every field from the file, including the Company: the file is the
-    /// newer account of this Application, and a merge that kept some fields
-    /// would leave a row that matches neither machine.
+    /// Takes the file's account of this Application, including its Company: the
+    /// file is the newer account, and a merge that kept some fields would leave
+    /// a row that matches neither machine.
+    ///
+    /// `appliedDate` is the exception, and it is not one this merge gets to
+    /// make: it is set once and never changes, so a file cannot rewrite the day
+    /// an application was sent.
     fileprivate func update(from record: BackupSnapshot.ApplicationRecord, at company: Company) {
         self.company = company
         title = record.title.trimmed
         status = record.status
-        appliedDate = record.appliedDate
         lastContactDate = record.lastContactDate
         jobURL = record.jobURL
         notes = record.notes

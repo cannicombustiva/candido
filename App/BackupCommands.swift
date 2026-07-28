@@ -38,22 +38,7 @@ extension View {
     /// so the only honest way to fail is loudly, in a dialog, saying what to
     /// do about it.
     func backupProblemAlert(_ folder: BackupFolder) -> some View {
-        alert(
-            "Your backup has stopped",
-            isPresented: Binding(
-                get: { folder.problem != nil },
-                set: { if !$0 { folder.dismissProblem() } }
-            ),
-            presenting: folder.problem
-        ) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { problem in
-            Text(
-                [problem.errorDescription, problem.recoverySuggestion]
-                    .compactMap { $0 }
-                    .joined(separator: "\n\n")
-            )
-        }
+        problemAlert("Your backup has stopped", folder.problem) { folder.dismissProblem() }
     }
 
     /// Reports what an import did, and what stopped one.
@@ -62,13 +47,36 @@ extension View {
     /// which is exactly what a failed import looks like too — so both outcomes
     /// are said out loud rather than inferred from the rows.
     func importReport(_ importer: BackupImporter) -> some View {
+        problemAlert("Nothing was imported", importer.problem) { importer.dismissProblem() }
+            .alert(
+                "Import finished",
+                isPresented: Binding(
+                    get: { importer.summary != nil },
+                    set: { if !$0 { importer.dismissSummary() } }
+                ),
+                presenting: importer.summary
+            ) { _ in
+                Button("OK", role: .cancel) {}
+            } message: { summary in
+                Text(summary.sentence)
+            }
+    }
+
+    /// The one way this app says something went wrong: a dialog carrying both
+    /// what happened and what to do about it.
+    ///
+    /// Every problem the backup feature has is reported this way, so a new one
+    /// cannot arrive wired to a quieter kind of failure — a silent backup or a
+    /// silent import is the failure being guarded against in the first place.
+    private func problemAlert<Problem: LocalizedError>(
+        _ title: String,
+        _ problem: Problem?,
+        dismiss: @escaping () -> Void
+    ) -> some View {
         alert(
-            "Nothing was imported",
-            isPresented: Binding(
-                get: { importer.problem != nil },
-                set: { if !$0 { importer.dismissProblem() } }
-            ),
-            presenting: importer.problem
+            title,
+            isPresented: Binding(get: { problem != nil }, set: { if !$0 { dismiss() } }),
+            presenting: problem
         ) { _ in
             Button("OK", role: .cancel) {}
         } message: { problem in
@@ -77,18 +85,6 @@ extension View {
                     .compactMap { $0 }
                     .joined(separator: "\n\n")
             )
-        }
-        .alert(
-            "Import finished",
-            isPresented: Binding(
-                get: { importer.summary != nil },
-                set: { if !$0 { importer.dismissSummary() } }
-            ),
-            presenting: importer.summary
-        ) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { summary in
-            Text(summary.sentence)
         }
     }
 }
