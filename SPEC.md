@@ -125,9 +125,28 @@ Rules:
 - **Editing happens in the inspector.** Not inline in the table — inline editing
   in SwiftUI `Table` will eat a weekend.
 - **Adding is toolbar `+` → sheet.** Not a blank row appended to the table.
+- **Deleting is asked about first.** `⌘⌫` or `File ▸ Delete Application…`, on
+  the selected row, behind a confirmation naming the row. Never a bare `⌫` — a
+  menu key equivalent is matched before the key reaches the field I am typing
+  in, and I am not losing an application to a backspace in the notes field.
 
 `MenuBarExtra` quick-add (company + title, straight to the store, same
 `ModelContainer`) is a later milestone, not v1.
+
+### Deleting is the one act that destroys work
+
+There is no undo and no trash. A deleted Application is gone, which is why it
+takes a confirmation naming the row to get there. Deleting is not archiving —
+an Archived Application is still tracked; a deleted one no longer exists.
+
+**Deleting the last Application at a Company takes that Company with it**, and
+so does an import that files it under a different Company. A Company is not
+work: it is never managed directly, it exists only because something was applied
+for there, and once empty it shows in no view while still being written into
+every backup — the file would slowly fill with names I never applied to.
+
+A Company that still holds an Application is never removed. That check is what
+keeps the cascade delete rule from taking work with it, and it is unit-tested.
 
 ## Backup
 
