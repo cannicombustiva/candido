@@ -13,11 +13,17 @@ struct CandidoApp: App {
     /// listens to the store, so no view has to remember to ask for a backup.
     @State private var mirror: BackupMirror
 
+    /// `File ▸ Import…`. Import is manual only — this is the only thing in the
+    /// app that reads a backup file back in, and it runs only when the owner
+    /// picks a file.
+    @State private var importer: BackupImporter
+
     init() {
         do {
             let container = try ModelContainer(for: Schema(CandidoCore.models))
             self.container = container
             _mirror = State(initialValue: BackupMirror(context: container.mainContext))
+            _importer = State(initialValue: BackupImporter(context: container.mainContext))
         } catch {
             fatalError("Could not open the job application store: \(error)")
         }
@@ -27,8 +33,9 @@ struct CandidoApp: App {
         WindowGroup {
             ContentView()
                 .backupProblemAlert(mirror.folder)
+                .importReport(importer)
         }
         .modelContainer(container)
-        .commands { BackupCommands(mirror: mirror) }
+        .commands { BackupCommands(mirror: mirror, importer: importer) }
     }
 }
