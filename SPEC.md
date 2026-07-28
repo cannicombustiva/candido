@@ -55,7 +55,7 @@ unit-tested. First spelling entered wins as the stored display name.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `company` | `Company` | Relationship |
-| `title` | `String` | Free text. Not normalized — titles are too messy to be worth an entity |
+| `title` | `String` | Free text. Surrounding whitespace is trimmed; nothing else is normalized — no case-folding, no collapsing of interior spaces, no deduplication, no entity. Titles are too messy to be worth one |
 | `status` | `Status` | See below |
 | `appliedDate` | `Date` | Set once, never changes |
 | `lastContactDate` | `Date` | Resets whenever either side makes contact. Drives staleness |
