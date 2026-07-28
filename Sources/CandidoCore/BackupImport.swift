@@ -117,19 +117,13 @@ extension BackupSnapshot {
     /// Drops the Companies a merge left holding nothing.
     ///
     /// This is not the deleting the spec forbids. What must never disappear is
-    /// work: an Application the file did not mention. A Company is not work —
-    /// it is never managed directly, exists only because something was applied
-    /// for there, and once the last Application has moved away it appears in no
-    /// screen and in no filter. Left in place it would still be written to
-    /// every backup from then on, so the file slowly fills with names of
-    /// companies nothing was ever applied for.
-    ///
-    /// A Company that still holds an Application is kept, which is the whole
-    /// check — the cascade delete rule means dropping one that did not would
-    /// take Applications with it.
+    /// work: an Application the file did not mention. A Company that has been
+    /// left holding nothing is not work, and it goes by the same rule a
+    /// deletion uses — one notion of a Company that has stopped meaning
+    /// anything, not one per caller.
     private func clearAway(_ vacated: [Company], in context: ModelContext) {
-        for company in vacated where company.applications.isEmpty {
-            context.delete(company)
+        for company in vacated {
+            company.clearAwayIfEmpty(from: context)
         }
     }
 

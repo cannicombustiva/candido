@@ -36,6 +36,9 @@ struct CandidoApp: App {
                 .importReport(importer)
         }
         .modelContainer(container)
-        .commands { BackupCommands(mirror: mirror, importer: importer) }
+        .commands {
+            ApplicationCommands()
+            BackupCommands(mirror: mirror, importer: importer)
+        }
     }
 }
