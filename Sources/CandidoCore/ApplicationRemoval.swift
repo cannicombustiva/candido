@@ -11,7 +11,15 @@ extension Application {
     public func remove(from context: ModelContext) {
         let company = self.company
         context.delete(self)
-        company.clearAwayIfEmpty(disregarding: self, from: context)
+        company.clearAwayIfEmpty(from: context)
+    }
+}
+
+extension Application {
+    /// Whether this Application has been deleted and is only waiting for the
+    /// context to work through it. Nothing should count it as work any more.
+    var isGoing: Bool {
+        isDeleted || modelContext == nil
     }
 }
 
@@ -27,13 +35,13 @@ extension Company {
     /// The emptiness check is the whole safeguard: the relationship cascades,
     /// so deleting a Company that still held work would take that work with it.
     ///
-    /// `leaving` is the Application on its way out, if there is one. A deleted
-    /// Application still sits in this list until the context works through the
-    /// deletion, so a caller that has just deleted one has to say so — asking
-    /// the list alone would find the Company still occupied by a row that is
-    /// already gone.
-    func clearAwayIfEmpty(disregarding leaving: Application? = nil, from context: ModelContext) {
-        guard applications.allSatisfy({ $0 === leaving }) else { return }
+    /// What counts as holding nothing is "no Application still standing", not
+    /// "no Application listed". A deleted Application stays in this list until
+    /// the context works through the deletion, so a Company emptied by two
+    /// deletions in a row would otherwise look occupied by the first of them
+    /// and survive — invisible, and in every backup from then on.
+    func clearAwayIfEmpty(from context: ModelContext) {
+        guard applications.allSatisfy(\.isGoing) else { return }
         context.delete(self)
     }
 }

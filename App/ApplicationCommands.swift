@@ -30,7 +30,11 @@ struct ApplicationCommands: Commands {
             Button("Delete Application…") {
                 requestDeletion?()
             }
-            .keyboardShortcut(.delete, modifiers: [])
+            // ⌘⌫, not a bare ⌫: a menu key equivalent is matched before the
+            // key reaches the field being typed in, so plain backspace would
+            // put "Delete this application?" in front of the owner mid-word in
+            // the notes field. Finder holds ⌘⌫ for the same reason.
+            .keyboardShortcut(.delete, modifiers: .command)
             .disabled(requestDeletion == nil)
         }
     }

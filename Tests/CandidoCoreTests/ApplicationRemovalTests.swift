@@ -43,6 +43,22 @@ struct ApplicationRemovalTests {
         #expect(try store.applications().map(\.title) == ["Android Engineer"])
     }
 
+    @Test("Emptying a Company one Application at a time clears it away too")
+    func clearsAwayACompanyEmptiedByTwoRemovals() throws {
+        let store = try TestStore()
+        let first = try store.application(company: "Spotify", title: "iOS Engineer")
+        let second = try store.application(company: "Spotify", title: "Android Engineer")
+        try store.application(company: "Monzo", title: "Platform Engineer")
+
+        // Both go before anything is saved, which is what the owner does when
+        // they delete two rows in a row.
+        first.remove(from: store.context)
+        second.remove(from: store.context)
+
+        #expect(try store.context.fetch(FetchDescriptor<Company>()).map(\.name) == ["Monzo"])
+        #expect(try store.applications().map(\.title) == ["Platform Engineer"])
+    }
+
     @Test("Removing the last Application of all empties the store")
     func emptiesTheStoreWhenItWasTheOnlyOne() throws {
         let store = try TestStore()
