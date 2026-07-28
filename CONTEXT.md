@@ -3,6 +3,20 @@
 Tracks the owner's own job applications, one company at a time, and surfaces the
 ones that have gone quiet. `SPEC.md` is the contract; this file is the glossary.
 
+## Where we are
+
+**Current milestone: M4** — parallel subagents on independent tracks. Its output
+is the export mirror (landed, #39) alongside `MenuBarExtra` (not built).
+
+`SPEC.md`'s milestone table says what each milestone *tests*; this line says
+which one is *running*. Update it when a milestone ends.
+
+Do not infer the milestone from branch names. `scripts/worktree.sh` hardcodes an
+`m2/` prefix, so every branch since M2 ended on 22 Jul has been misnamed. The
+number decides which score file a run lands in and which checklist items the
+yardstick excludes from it, so a wrong guess mis-scores the run — reading the
+prefixes once put M4's delete work in a milestone that would have excluded it.
+
 ## Language
 
 ### Core entities
