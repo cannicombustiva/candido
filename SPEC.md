@@ -81,7 +81,7 @@ There is no background job. Nothing mutates status behind my back. `isStale` is
 computed on read, every time.
 
 ```
-isStale = status.standing is .awaitingTheirReply(silenceTolerated: n) && daysSince(lastContactDate) > n
+isStale = status awaits their reply, tolerating n days of silence, AND daysSince(lastContactDate) > n
 ```
 
 **Silence tolerated is per-status.** Silence after a final interview is louder

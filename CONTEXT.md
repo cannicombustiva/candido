@@ -57,10 +57,19 @@ contact and today. Not elapsed hours — time of day never affects whether an
 Application is Stale.
 _Avoid_: Age, elapsed time, days old
 
+**Silence tolerated**:
+How many days of silence a Status puts up with before an Application in it is
+Stale. It belongs to the Status, not to the Application, and only a Status that
+Awaits their reply has one — silence is not a problem when the next move is the
+owner's or the Application is Terminal. `SPEC.md` sets the days per Status and
+is the only place they live.
+_Avoid_: Threshold, limit, timeout, grace period, deadline
+
 **Standing**:
 Whose move it is, and whether an Application is still in play. Every Status has
 exactly one Standing, and it is the only classification of Status there is —
-Awaits their reply, Terminal and the staleness thresholds are all read off it.
+Awaits their reply, Terminal and the silence a Status tolerates are all read
+off it.
 _Avoid_: State, category, kind
 
 **Awaits their reply**:
