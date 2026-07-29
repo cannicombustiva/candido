@@ -81,7 +81,7 @@ There is no background job. Nothing mutates status behind my back. `isStale` is
 computed on read, every time.
 
 ```
-isStale = status.standing is .awaitingTheirReply(silenceTolerated: n) && daysSince(lastContactDate) > n
+isStale = status awaits their reply, tolerating n days of silence, AND daysSince(lastContactDate) > n
 ```
 
 **Silence tolerated is per-status.** Silence after a final interview is louder
@@ -96,8 +96,8 @@ than silence after applying.
 | `rejected` | over | — (terminal) |
 | `withdrawn` | over | — (terminal) |
 
-**Boundary is strict.** `> silenceTolerated`, not `>=`. At exactly 21 days an
-`applied` row is *not* stale. At 22 days it is.
+**Boundary is strict.** `>` the tolerated silence, not `>=`. At exactly 21 days
+an `applied` row is *not* stale. At 22 days it is.
 
 **Days are calendar days in the local timezone**, not elapsed 24-hour intervals.
 Rows turn stale at local midnight. Time of day is not part of the decision — two
