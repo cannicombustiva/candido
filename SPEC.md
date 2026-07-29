@@ -81,23 +81,23 @@ There is no background job. Nothing mutates status behind my back. `isStale` is
 computed on read, every time.
 
 ```
-isStale = status.awaitsTheirReply && daysSince(lastContactDate) > threshold(status)
+isStale = status.standing is .awaitingTheirReply(silenceTolerated: n) && daysSince(lastContactDate) > n
 ```
 
-**Thresholds are per-status.** Silence after a final interview is louder than
-silence after applying.
+**Silence tolerated is per-status.** Silence after a final interview is louder
+than silence after applying.
 
-| Status | Awaits their reply | Threshold |
+| Status | Standing | Silence tolerated |
 | --- | --- | --- |
-| `applied` | yes | 21 days |
-| `screening` | yes | 14 days |
-| `interviewing` | yes | 10 days |
-| `offer` | no | — (ball is in my court) |
-| `rejected` | no | — (terminal) |
-| `withdrawn` | no | — (terminal) |
+| `applied` | awaits their reply | 21 days |
+| `screening` | awaits their reply | 14 days |
+| `interviewing` | awaits their reply | 10 days |
+| `offer` | awaits your move | — (ball is in my court) |
+| `rejected` | over | — (terminal) |
+| `withdrawn` | over | — (terminal) |
 
-**Boundary is strict.** `> threshold`, not `>=`. At exactly 21 days an `applied`
-row is *not* stale. At 22 days it is.
+**Boundary is strict.** `> silenceTolerated`, not `>=`. At exactly 21 days an
+`applied` row is *not* stale. At 22 days it is.
 
 **Days are calendar days in the local timezone**, not elapsed 24-hour intervals.
 Rows turn stale at local midnight. Time of day is not part of the decision — two
@@ -192,9 +192,9 @@ Round-trip is unit-tested: export → import → identical dataset.
 I do not read the code, so tests and screenshots carry the full load.
 
 - **`swift test` in `CandidoCore`** — the only thing between me and an app
-  that compiles while computing staleness wrong. Covers: threshold boundaries
-  per status, `lastContactDate` clock, find-or-create case folding, JSON
-  round-trip.
+  that compiles while computing staleness wrong. Covers: silence-tolerated
+  boundaries per status, `lastContactDate` clock, find-or-create case folding,
+  JSON round-trip.
 - **Agent screenshots itself** — build, launch, capture, attach to the report. I
   review pixels, not diffs. Catches "compiles fine, table renders empty," which
   no unit test will.
