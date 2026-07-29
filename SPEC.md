@@ -96,8 +96,8 @@ than silence after applying.
 | `rejected` | over | — (terminal) |
 | `withdrawn` | over | — (terminal) |
 
-**Boundary is strict.** `> silenceTolerated`, not `>=`. At exactly 21 days an
-`applied` row is *not* stale. At 22 days it is.
+**Boundary is strict.** `>` the tolerated silence, not `>=`. At exactly 21 days
+an `applied` row is *not* stale. At 22 days it is.
 
 **Days are calendar days in the local timezone**, not elapsed 24-hour intervals.
 Rows turn stale at local midnight. Time of day is not part of the decision — two
