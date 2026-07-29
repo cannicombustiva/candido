@@ -68,8 +68,8 @@ _Avoid_: Threshold, limit, timeout, grace period, deadline
 **Standing**:
 Whose move it is, and whether an Application is still in play. Every Status has
 exactly one Standing, and it is the only classification of Status there is —
-Awaits their reply, Terminal and the silence a Status tolerates are all read
-off it.
+Awaits their reply, Awaits your move and Over are the three Standings; Terminal
+and the silence a Status tolerates are read off them.
 _Avoid_: State, category, kind
 
 **Awaits their reply**:
@@ -82,6 +82,12 @@ _Avoid_: Pending, open, waiting
 The Standing of `offer`: still live, but the owner is the one who owes an
 answer, so it can never be Stale.
 _Avoid_: Pending, action required
+
+**Over**:
+The Standing of a Status the Application does not move on from. Nobody owes
+anybody a move, so an Application that stands Over can never be Stale, and it
+is Archived rather than Active.
+_Avoid_: Closed, finished, dead, done
 
 **Terminal**:
 A Status the Application does not move on from: `rejected` or `withdrawn`.
