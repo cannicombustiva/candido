@@ -61,8 +61,8 @@ _Avoid_: Age, elapsed time, days old
 How many days of silence a Status puts up with before an Application in it is
 Stale. It belongs to the Status, not to the Application, and only a Status that
 Awaits their reply has one — silence is not a problem when the next move is the
-owner's or the Application is Terminal. `SPEC.md` sets the days per Status and
-is the only place they live.
+owner's or when the Application's Status is Terminal. `SPEC.md` sets the days
+per Status and is the only place they live.
 _Avoid_: Threshold, limit, timeout, grace period, deadline
 
 **Standing**:
@@ -86,12 +86,13 @@ _Avoid_: Pending, action required
 **Over**:
 The Standing of a Status the Application does not move on from. Nobody owes
 anybody a move, so an Application that stands Over can never be Stale, and it
-is Archived rather than Active.
+is Archived rather than Active. Over is the Standing, not the Status — the
+Status is Terminal.
 _Avoid_: Closed, finished, dead, done
 
 **Terminal**:
 A Status the Application does not move on from: `rejected` or `withdrawn`.
-Its Standing is Over.
+Its Standing is Over. Terminal is the Status, not the Standing.
 _Avoid_: Closed, finished, dead
 
 ### Leaving the store
@@ -129,8 +130,9 @@ archiving.
 _Avoid_: Closed, hidden, done, inactive
 
 **Stale (view)**:
-The Stale subset of Active. Always a subset, and structurally so — a Terminal
-Application stands Over, and only Awaits their reply can go Stale.
+The Stale subset of Active. Always a subset, and structurally so — an
+Application whose Status is Terminal stands Over, and only Awaits their reply
+can go Stale.
 
 **All**:
 Every Application, Active and Archived alike.
