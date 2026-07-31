@@ -11,8 +11,9 @@ is the export mirror (landed, #39) alongside `MenuBarExtra` (not built).
 `SPEC.md`'s milestone table says what each milestone *tests*; this line says
 which one is *running*. Update it when a milestone ends.
 
-Do not infer the milestone from branch names. `scripts/worktree.sh` hardcodes an
-`m2/` prefix, so every branch since M2 ended on 22 Jul has been misnamed. The
+Do not infer the milestone from branch names. The script that created branches
+hardcoded an `m2/` prefix, so every branch between M2 ending on 22 Jul and the
+script's deletion was misnamed, and those branches are still on the remote. The
 number decides which score file a run lands in and which checklist items the
 yardstick excludes from it, so a wrong guess mis-scores the run — reading the
 prefixes once put M4's delete work in a milestone that would have excluded it.

@@ -56,7 +56,6 @@ Sources/CandidoCore/       Domain: models, staleness, find-or-create, JSON codec
 Tests/CandidoCoreTests/    swift-testing tests for the above
 App/                       SwiftUI app target sources + entitlements
 project.yml                xcodegen spec — source of truth for the app target
-scripts/worktree.sh        Claims a git worktree for an issue
 ```
 
 Everything with a decision in it — thresholds, date maths, name matching,
