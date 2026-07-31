@@ -31,44 +31,32 @@ checking your diff line by line. That means:
 - If you are unsure whether something matches the spec, flag it. It will not be
   caught downstream.
 
-## Rule: one worktree per session, and check which one you are in
+## Rule: commit deliberately
 
-More than one agent runs against this repo at a time. They must not share a
-checkout: on 22 Jul 2026 two sessions did, and one committed its work onto the
-other's branch and pushed it into their PR — the tree it committed to was not
-the one it had read `git status` from at startup.
+Work on a branch named `<issue>-<slug>` — the issue number, then a short slug,
+with no prefix of any kind: `14-day-boundary`, never `m2/14-day-boundary`.
 
-Start work by claiming a worktree:
+Three rules about committing, each with a reason that stands on its own:
 
-```bash
-scripts/worktree.sh <issue-number> <slug>   # e.g. scripts/worktree.sh 14 day-boundary
-```
-
-It branches off `origin/main` and puts the tree in `../candido-worktrees/`,
-with its own `.build/` and `DerivedData/`. Commit and push only from there.
-
-Then, because a session can be long and the tree can move under it:
-
-- **Re-read the branch immediately before every commit** (`git status -sb`).
-  The git snapshot in the session prompt is from startup and goes stale.
 - **Never `git add -A` or `git commit -a`.** Stage the paths you edited by
-  name, so another session's in-flight work cannot ride along.
-- If `git status` shows changes you did not make, stop and ask. Do not commit
-  around them and do not revert them.
+  name. The tree carries untracked local files —
+  `.claude/settings.local.json`, `DerivedData/`, scratch output — and a
+  wildcard stage sweeps them into your commit.
+- **Re-read `git status -sb` immediately before every commit.** The git
+  snapshot in your startup prompt is from startup. A session can be long, and
+  branches move under it.
+- **If `git status` shows changes you did not make, stop and ask.** Do not
+  commit around them and do not revert them. They are someone's work in
+  progress, and neither guessing is yours to make.
 
-The primary checkout at `candido/` is for reading, reviewing and merging.
-`../candido-m0` is the frozen M0 control run and is not a worktree — never
-branch or commit there.
-
-One thing worktrees do not isolate: every Debug build shares the bundle
-identifier `com.candido.Candido.dev`, so all of them read one sandbox
-container. Launch the app from one session at a time.
+Every Debug build uses the bundle identifier `com.candido.Candido.dev`, and a
+sandboxed app's container is keyed by that identifier. All Debug builds
+therefore read and write one store — launch the app from one session at a time.
 
 ## Layout
 
 ```
 Package.swift              CandidoCore package manifest
-scripts/worktree.sh        Claim a worktree for an issue (see the rule above)
 Sources/CandidoCore/       Domain: models, staleness, find-or-create, JSON codec
 Tests/CandidoCoreTests/    swift-testing tests for the above
 App/                       SwiftUI app target sources + entitlements
@@ -144,7 +132,8 @@ Two things they need are deliberately **not** in this repo:
   M0 among them — need `YARDSTICK_PRODUCT=JobTrackerCore` set.
 - **`../candido-m0`** — the M0 control run: seeded with `SPEC.md` and nothing
   else, no CLAUDE.md, no CONTEXT.md, no ADRs. **Never edit its `SPEC.md`**, even
-  to fix a typo. It is a frozen seed and the comparison depends on it.
+  to fix a typo, and never branch or commit there. It is a frozen seed and the
+  comparison depends on it staying exactly as it was.
 
 If you are amending `SPEC.md`, the checklist and the affected score files must
 be updated in step — see that repo's README for the drift rules.
