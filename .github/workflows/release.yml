@@ -1,9 +1,13 @@
 name: Release
 
 # One workflow, two triggers — not two workflows. workflow_dispatch builds,
-# packages and verifies exactly as a tag push does, but uploads the dmg as a
-# workflow artifact instead of publishing a release, so the tag path is
+# packages and verifies by the same steps a tag push does, but uploads the dmg
+# as a workflow artifact instead of publishing a release, so the tag path is
 # exercisable without minting a tag.
+#
+# The one deliberate difference is the version: a dry run has no tag to read one
+# from, so it builds 0.0.0. Everything else — the build, the packaging and every
+# assertion below — is the same code on both paths.
 on:
   push:
     tags:
@@ -12,6 +16,12 @@ on:
 
 permissions:
   contents: write
+
+# Releases are not interchangeable the way CI runs are: a run that is midway
+# through `gh release create` must not be cancelled by a later one.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -24,19 +34,41 @@ jobs:
       - name: Report toolchain
         run: xcodebuild -version
 
+      # Publishing is gated on `github.event_name == 'push'`, not on ref_type
+      # alone: workflow_dispatch's ref picker offers tags, so a dry run can be
+      # started from a tag ref and would otherwise take the publish path.
       - name: Work out the version
         id: version
         run: |
           set -euo pipefail
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            version="${GITHUB_REF_NAME#v}"
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            tag="${GITHUB_REF_NAME}"
+            # CFBundleShortVersionString is up to three period-separated
+            # integers. A tag that does not reduce to one would otherwise be
+            # discovered by Finder showing a blank version, after publishing.
+            if ! printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::tag ${tag} is not vMAJOR.MINOR.PATCH"
+              exit 1
+            fi
+            version="${tag#v}"
+            label="${version}"
           else
-            # A dry run has no tag. project.yml's MARKETING_VERSION is a
-            # placeholder, so this only ever labels an artifact nobody ships.
-            version="0.0.0-dryrun"
+            # No tag to read a version from. 0.0.0 is a valid marketing version
+            # — "0.0.0-dryrun" is not, and would build a bundle unlike the one
+            # a tag push produces, defeating the point of the rehearsal.
+            version="0.0.0"
+            label="0.0.0-dryrun"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "Building version ${version}"
+          echo "label=${label}" >> "$GITHUB_OUTPUT"
+          echo "Building version ${version} (${label})"
+
+      # The dmg is built from the same commit these assert against, and CLAUDE.md
+      # treats the tests as the thing standing between a wrong implementation and
+      # an app that merely looks fine. A release that skipped them would be the
+      # one build nobody had checked.
+      - name: Run the tests
+        run: swift test
 
       - name: Install xcodegen
         run: brew install xcodegen
@@ -45,11 +77,11 @@ jobs:
         run: xcodegen generate
 
       # Release, not Debug. CODE_SIGN_INJECT_BASE_ENTITLEMENTS is NO on this
-      # configuration, so the built app carries only the three keys in
-      # App/Candido.entitlements — asserted below before anything is published.
+      # configuration, so the built app carries only what App/Candido.entitlements
+      # declares — asserted below, against that file, before anything is published.
       - name: Build the app
         run: |
-          set -o pipefail
+          set -euo pipefail
           xcodebuild \
             -project Candido.xcodeproj \
             -scheme Candido \
@@ -95,25 +127,33 @@ jobs:
             || { echo "::error::hardened runtime flag missing"; exit 1; }
 
           echo "--- entitlements ---"
-          # Exactly the three keys App/Candido.entitlements declares. In
-          # particular no com.apple.security.get-task-allow: with the hardened
-          # runtime on, that entitlement is what would leave the shipped app
-          # attachable by a debugger.
+          # Compared as a set against App/Candido.entitlements rather than
+          # against key names repeated here, so that adding a legitimate
+          # entitlement is a one-file change instead of a release failure with a
+          # misleading message.
+          #
+          # The comparison is exact in both directions, and the extra-key half is
+          # the half that matters: com.apple.security.get-task-allow is what
+          # would leave the shipped app attachable by a debugger, and it appears
+          # by being present, not by being absent.
           codesign -d --entitlements - --xml "$app" 2>/dev/null > /tmp/built.plist
-          for key in \
-            com.apple.security.app-sandbox \
-            com.apple.security.files.user-selected.read-write \
-            com.apple.security.files.bookmarks.app-scope
-          do
-            /usr/libexec/PlistBuddy -c "Print :$key" /tmp/built.plist >/dev/null \
-              || { echo "::error::missing entitlement $key"; exit 1; }
-          done
-          count=$(plutil -convert json -o - /tmp/built.plist | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
-          if [ "$count" -ne 3 ]; then
-            echo "::error::expected exactly 3 entitlements, found ${count}:"
-            plutil -p /tmp/built.plist
-            exit 1
-          fi
+          plutil -convert json -o /tmp/built.json /tmp/built.plist
+          plutil -convert json -o /tmp/declared.json App/Candido.entitlements
+          python3 - <<'PY'
+          import json, sys
+
+          declared = set(json.load(open("/tmp/declared.json")))
+          built = set(json.load(open("/tmp/built.json")))
+
+          for key in sorted(declared - built):
+              print(f"::error::missing entitlement {key}")
+          for key in sorted(built - declared):
+              print(f"::error::unexpected entitlement {key}")
+
+          if declared != built:
+              sys.exit(1)
+          print(f"entitlements match the {len(declared)} declared in App/Candido.entitlements")
+          PY
 
           echo "--- dmg contents ---"
           mountpoint=$(mktemp -d)
@@ -131,10 +171,10 @@ jobs:
 
       # Dry run: no release, just something to download and open by hand.
       - name: Upload the dmg as an artifact
-        if: github.ref_type != 'tag'
+        if: github.event_name != 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: Candido-dmg-${{ steps.version.outputs.version }}
+          name: Candido-dmg-${{ steps.version.outputs.label }}
           path: Candido.dmg
           if-no-files-found: error
 
@@ -142,7 +182,7 @@ jobs:
       # at /releases/latest/download/Candido.dmg, which only resolves against a
       # stable asset name.
       - name: Publish the release
-        if: github.ref_type == 'tag'
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
