@@ -22,6 +22,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.candido.Candido
+        # A placeholder. Releases override it from the tag
+        # (MARKETING_VERSION=${tag#v}), so the tag is the one thing to bump and
+        # this value only ever labels a local build.
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES

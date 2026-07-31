@@ -1,0 +1,153 @@
+name: Release
+
+# One workflow, two triggers — not two workflows. workflow_dispatch builds,
+# packages and verifies exactly as a tag push does, but uploads the dmg as a
+# workflow artifact instead of publishing a release, so the tag path is
+# exercisable without minting a tag.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, verify and publish
+    runs-on: macos-26-arm64
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Report toolchain
+        run: xcodebuild -version
+
+      - name: Work out the version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            # A dry run has no tag. project.yml's MARKETING_VERSION is a
+            # placeholder, so this only ever labels an artifact nobody ships.
+            version="0.0.0-dryrun"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Building version ${version}"
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate the Xcode project
+        run: xcodegen generate
+
+      # Release, not Debug. CODE_SIGN_INJECT_BASE_ENTITLEMENTS is NO on this
+      # configuration, so the built app carries only the three keys in
+      # App/Candido.entitlements — asserted below before anything is published.
+      - name: Build the app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Candido.xcodeproj \
+            -scheme Candido \
+            -configuration Release \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath DerivedData \
+            MARKETING_VERSION="${{ steps.version.outputs.version }}" \
+            build \
+            | grep -E "error:|BUILD"
+
+      # The staging folder is what the user sees when the dmg mounts: the app,
+      # and an alias to drag it onto. Plain hdiutil only — create-dmg with
+      # AppleScript window styling hangs on headless runners.
+      - name: Stage and package the dmg
+        run: |
+          set -euo pipefail
+          rm -rf staging
+          mkdir staging
+          cp -R DerivedData/Build/Products/Release/Candido.app staging/
+          ln -s /Applications staging/Applications
+          hdiutil create \
+            -volname Candido \
+            -srcfolder staging \
+            -ov \
+            -format UDZO \
+            Candido.dmg
+          ls -lh Candido.dmg
+
+      # This step is the point of the workflow. Any failure here fails the run
+      # before a user can download something that is not what the README
+      # promises — and the Release build has never been launched by anyone, so
+      # whoever downloads the dmg is its first real user.
+      - name: Verify the artifact
+        run: |
+          set -euo pipefail
+          app=DerivedData/Build/Products/Release/Candido.app
+
+          echo "--- signature ---"
+          codesign -dv "$app" 2>&1 | tee /tmp/codesign.txt
+          grep -q "Signature=adhoc" /tmp/codesign.txt \
+            || { echo "::error::expected an ad-hoc signature"; exit 1; }
+          grep -q "runtime" /tmp/codesign.txt \
+            || { echo "::error::hardened runtime flag missing"; exit 1; }
+
+          echo "--- entitlements ---"
+          # Exactly the three keys App/Candido.entitlements declares. In
+          # particular no com.apple.security.get-task-allow: with the hardened
+          # runtime on, that entitlement is what would leave the shipped app
+          # attachable by a debugger.
+          codesign -d --entitlements - --xml "$app" 2>/dev/null > /tmp/built.plist
+          for key in \
+            com.apple.security.app-sandbox \
+            com.apple.security.files.user-selected.read-write \
+            com.apple.security.files.bookmarks.app-scope
+          do
+            /usr/libexec/PlistBuddy -c "Print :$key" /tmp/built.plist >/dev/null \
+              || { echo "::error::missing entitlement $key"; exit 1; }
+          done
+          count=$(plutil -convert json -o - /tmp/built.plist | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
+          if [ "$count" -ne 3 ]; then
+            echo "::error::expected exactly 3 entitlements, found ${count}:"
+            plutil -p /tmp/built.plist
+            exit 1
+          fi
+
+          echo "--- dmg contents ---"
+          mountpoint=$(mktemp -d)
+          hdiutil attach Candido.dmg -mountpoint "$mountpoint" -nobrowse -readonly
+          trap 'hdiutil detach "$mountpoint" -force || true' EXIT
+          ls -la "$mountpoint"
+          [ -d "$mountpoint/Candido.app" ] \
+            || { echo "::error::Candido.app missing from the dmg"; exit 1; }
+          [ -L "$mountpoint/Applications" ] \
+            || { echo "::error::/Applications alias missing from the dmg"; exit 1; }
+          hdiutil detach "$mountpoint"
+          trap - EXIT
+
+          echo "artifact verified"
+
+      # Dry run: no release, just something to download and open by hand.
+      - name: Upload the dmg as an artifact
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Candido-dmg-${{ steps.version.outputs.version }}
+          path: Candido.dmg
+          if-no-files-found: error
+
+      # The asset name is never versioned. The README's download button points
+      # at /releases/latest/download/Candido.dmg, which only resolves against a
+      # stable asset name.
+      - name: Publish the release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" \
+            Candido.dmg \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
