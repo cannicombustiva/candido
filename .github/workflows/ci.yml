@@ -1,7 +1,14 @@
 name: CI
 
+# pull_request covers every branch on its way in; push covers main, so a merge
+# is still checked. Leaving push unrestricted would run this twice on every
+# branch that has a PR open — once for refs/heads/<branch> and once for
+# refs/pull/<n>/merge — and the concurrency group below cannot collapse them,
+# because those are different refs.
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 concurrency:
