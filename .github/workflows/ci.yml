@@ -18,7 +18,13 @@ concurrency:
 jobs:
   build:
     name: Test and build
-    runs-on: macos-26-arm64
+    # macos-26, not macos-26-arm64. The image this resolves to is itself named
+    # macos-26-arm64 and prints that name in the job's setup log, but that is
+    # the image's name, not a label you can ask for. Requesting it leaves the
+    # job queued indefinitely — GitHub waits for a runner matching the label
+    # rather than failing the run, so the mistake looks like a slow queue.
+    # macos-26 is macOS 26 on arm64, which is the toolchain CLAUDE.md declares.
+    runs-on: macos-26
 
     steps:
       - uses: actions/checkout@v5
