@@ -57,3 +57,16 @@ targets:
           # title, which follows CFBundleName, reads plain "Candido" in Debug
           # too — the "(Dev)" shows in the menu items, Dock and Finder only.
           INFOPLIST_KEY_CFBundleDisplayName: Candido (Dev)
+          # Debug keeps Xcode's injected get-task-allow. A Debug build a
+          # debugger cannot attach to is worse than useless.
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: YES
+        # The signing identity is ad-hoc, so Xcode injects
+        # com.apple.security.get-task-allow into the built entitlements even
+        # though it is not in App/Candido.entitlements. Alongside
+        # ENABLE_HARDENED_RUNTIME it is the entitlement that makes the hardened
+        # runtime bypassable — the shipped app stays debugger-attachable, which
+        # is most of what the hardened runtime is there to prevent. Turning the
+        # injection off on Release leaves the built app with exactly the three
+        # keys the entitlements file declares.
+        Release:
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
