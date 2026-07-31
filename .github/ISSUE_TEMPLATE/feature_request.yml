@@ -1,0 +1,64 @@
+name: Feature request
+description: Candido should do something it does not do.
+labels:
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The problem first, the proposed behaviour second. A request that names
+        only a solution is hard to triage, because the reason it exists is the
+        part that decides whether the solution is the right one.
+
+        `SPEC.md` is the contract and is hand-written by the owner. If what you
+        are asking for changes what it promises, say so below — that makes this
+        an amendment rather than an implementation, and it is handled
+        differently.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: >-
+        What goes wrong today, in terms of tracking Applications — not in terms
+        of the feature you have in mind.
+      placeholder: >-
+        Applications I have withdrawn still take up room when I am scanning for
+        the ones that need chasing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: behaviour
+    attributes:
+      label: The behaviour you want
+      description: >-
+        What Candido should do. Concrete beats general — what you would see, and
+        when.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: spec-amendment
+    attributes:
+      label: Does this need a SPEC.md amendment?
+      description: >-
+        Say so if this changes the domain model, the Statuses, the days of
+        silence a Status tolerates, the views, or the backup behaviour. If you
+        are not sure, choose the last option — that is what triage is for.
+      options:
+        - "No — it fits what SPEC.md already promises"
+        - "Yes — it changes something SPEC.md states"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you considered instead
+      description: >-
+        Including doing nothing. Naming the alternatives stops a future reader
+        assuming they were never thought of.
+    validations:
+      required: false

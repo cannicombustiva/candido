@@ -1,0 +1,3 @@
+# Everything enters through a form, so a report arrives with the fields that
+# make it reproducible rather than as a blank box.
+blank_issues_enabled: false
