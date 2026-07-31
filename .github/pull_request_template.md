@@ -15,6 +15,7 @@ in isStale". -->
 
 ## Verification
 
+- [ ] A changelog label is applied — `feat`, `fix`, `docs`, `spec`, `refactor`, `test` or `chore` <!-- the release notes group by label, not by title; see docs/agents/triage-labels.md -->
 - [ ] `swift test` passes — paste the summary line
 - [ ] Behaviour checked against `SPEC.md`, naming the section: <!-- e.g. the silence tolerated per Status, and the strict `>` boundary -->
 - [ ] This change touches UI, and a screenshot is attached
