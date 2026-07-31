@@ -6,6 +6,13 @@ when either side last made contact, and surfaces the ones that have gone quiet.
 
 Local-only SwiftData, no account, no server, no paid Apple Developer account.
 
+[![Download for macOS](docs/assets/download-button.svg)](https://github.com/cannicombustiva/candido/releases/latest/download/Candido.dmg)
+
+![Candido tracking seven applications, two of them stale](docs/assets/screenshot.png)
+
+macOS 15 or later, Apple Silicon. It is **unsigned**, so the first launch takes
+one trip through System Settings — [see below](#first-launch).
+
 - [`SPEC.md`](SPEC.md) is the contract — hand-written, and the source of truth.
   When the code and the spec disagree, the code is wrong.
 - [`CONTEXT.md`](CONTEXT.md) is the glossary for the domain language.
@@ -62,10 +69,47 @@ Everything with a decision in it — thresholds, date maths, name matching,
 encoding — lives in the `CandidoCore` package, so `swift test` reaches it in
 seconds without a GUI run. The app target holds views and wiring only.
 
+## First launch
+
+Candido is ad-hoc signed. There is no paid Apple Developer account behind it and
+there will not be one, so it cannot be notarized, and macOS will warn you the
+first time you open it. The warning is about the *absence of a signature*, not
+about anything the app does. It is a once-only step.
+
+**Do these in order.** The order is what matters:
+
+1. **Open `Candido.dmg` and drag `Candido.app` onto the `Applications` alias
+   beside it.** Do not launch it from the disk image. A quarantined app run from
+   a mounted image — or from `~/Downloads` — is executed by macOS from a
+   randomised read-only path, and behaves strangely in ways you cannot diagnose.
+   Dragging it to `/Applications` first is what avoids that.
+2. **Launch it from `/Applications`.** macOS refuses, saying it cannot verify the
+   developer.
+3. **Open System Settings ▸ Privacy & Security**, scroll to the Security section,
+   and click **Open Anyway** next to the message about Candido. Confirm.
+
+macOS remembers. Every launch after this one is an ordinary double-click.
+
+`docs/adr/0004-candido-ships-unsigned.md` records why this is permanent, and why
+the download is a disk image rather than a zip.
+
 ## Requirements
+
+### To run
+
+macOS 15 or later, on Apple Silicon.
+
+macOS 15 is the deployment target declared in both `Package.swift` and
+`project.yml`. Nothing has been tested on macOS 15 — the floor is stated as
+declared, not as verified. Builds are arm64 only; macOS 26 is Apple's last Intel
+release and there are no known Intel users.
+
+### To build
 
 Swift 6.3, Xcode 26.6, macOS 26 (arm64), and
 [`xcodegen`](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+
+These are the *build* toolchain, not what the app needs in order to run.
 
 ## Tests
 
