@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test and build
+    runs-on: macos-26-arm64
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # The runner image's default Xcode was set to 26.6, matching the
+      # toolchain in CLAUDE.md, so no xcode-select step is needed. Printing it
+      # means a future image change shows up here rather than as a mystery
+      # failure further down.
+      - name: Report toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # CandidoCore holds everything with a decision in it, so this is the
+      # cheap check and it runs first.
+      - name: swift test
+        run: swift test
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      # Candido.xcodeproj is generated and gitignored; project.yml is the
+      # source of truth.
+      - name: Generate the Xcode project
+        run: xcodegen generate
+
+      # The first thing in this repo's history to compile App/. xcodebuild is
+      # extremely verbose, so its output is filtered — pipefail keeps the
+      # build's exit status rather than the filter's, so a failure cannot be
+      # swallowed by a grep that matched nothing.
+      #
+      # Debug, not Release: this job exists to catch a broken view. Release is
+      # exercised by the release workflow.
+      - name: Build the app target
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Candido.xcodeproj \
+            -scheme Candido \
+            -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath DerivedData \
+            build \
+            | grep -E "error:|warning:|BUILD"
