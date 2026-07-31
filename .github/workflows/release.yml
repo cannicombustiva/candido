@@ -26,7 +26,11 @@ concurrency:
 jobs:
   release:
     name: Build, verify and publish
-    runs-on: macos-26-arm64
+    # macos-26, not macos-26-arm64 — see the note in ci.yml. The latter is the
+    # runner image's name rather than a requestable label, and asking for it
+    # queues the job forever instead of failing it. macos-26 is macOS 26 on
+    # arm64, so the release is still built on the declared toolchain.
+    runs-on: macos-26
 
     steps:
       - uses: actions/checkout@v5
