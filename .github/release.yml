@@ -1,0 +1,32 @@
+# Auto-generated release notes, so no changelog is kept by hand.
+#
+# GitHub groups by pull request *label*, not by title prefix — there is no
+# title-matching option. The labels below are named after the prefixes the
+# history already uses (docs, feat, fix, refactor, chore, test) so the two
+# vocabularies stay the same one. A PR with no matching label still appears,
+# under "Everything else".
+changelog:
+  exclude:
+    labels:
+      - wontfix
+  categories:
+    - title: Features
+      labels:
+        - feat
+    - title: Fixes
+      labels:
+        - fix
+    - title: Documentation and the spec
+      labels:
+        - docs
+        - spec
+    - title: Refactoring
+      labels:
+        - refactor
+    - title: Tests and chores
+      labels:
+        - test
+        - chore
+    - title: Everything else
+      labels:
+        - "*"

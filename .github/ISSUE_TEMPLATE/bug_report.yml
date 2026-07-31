@@ -1,0 +1,102 @@
+name: Bug report
+description: Something in Candido behaves differently from what SPEC.md says.
+labels:
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Most bugs here are about **staleness** — whether an Application is Stale
+        when it should be, or isn't when it should be. The fields below are the
+        ones that make such a report reproducible; without them it can only be
+        guessed at.
+
+        `CONTEXT.md` is the glossary if any of the words below are unfamiliar.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, and what Candido did.
+      placeholder: The row stayed plain after I set the last contact date to three weeks ago.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What you expected instead
+      description: If `SPEC.md` says what should have happened, quote the section.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: status
+    attributes:
+      label: Status of the Application
+      description: Where the Application stood when you saw this.
+      options:
+        - applied
+        - screening
+        - interviewing
+        - offer
+        - rejected
+        - withdrawn
+        - Several, or not about one Application
+    validations:
+      required: true
+
+  - type: input
+    id: last-contact
+    attributes:
+      label: Last contact date
+      description: >-
+        The date on the Application, as YYYY-MM-DD. Days of silence are counted
+        from it in calendar days, so the exact date matters and the time of day
+        does not.
+      placeholder: "2026-07-09"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: staleness
+    attributes:
+      label: How the row's staleness looked
+      description: >-
+        Stale rows are styled rather than hidden, so this is what you could see
+        in the list.
+      options:
+        - Styled as Stale, and it should not have been
+        - Not styled as Stale, and it should have been
+        - Styled as Stale, but the Stale view did not list it
+        - Listed in the Stale view, but not styled as Stale
+        - Not about staleness
+    validations:
+      required: true
+
+  - type: input
+    id: today
+    attributes:
+      label: What day was it
+      description: >-
+        The date you observed this, as YYYY-MM-DD. Staleness is derived against
+        today, so a report is not reproducible without it.
+      placeholder: "2026-07-31"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The version shown in Candido ▸ About Candido, or the commit you built.
+    validations:
+      required: false
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else
+      description: Screenshots, a backup JSON with the names removed, whatever helps.
+    validations:
+      required: false
