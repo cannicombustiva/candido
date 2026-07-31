@@ -1,0 +1,197 @@
+name: Release
+
+# One workflow, two triggers — not two workflows. workflow_dispatch builds,
+# packages and verifies by the same steps a tag push does, but uploads the dmg
+# as a workflow artifact instead of publishing a release, so the tag path is
+# exercisable without minting a tag.
+#
+# The one deliberate difference is the version: a dry run has no tag to read one
+# from, so it builds 0.0.0. Everything else — the build, the packaging and every
+# assertion below — is the same code on both paths.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Releases are not interchangeable the way CI runs are: a run that is midway
+# through `gh release create` must not be cancelled by a later one.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build, verify and publish
+    # macos-26, not macos-26-arm64 — see the note in ci.yml. The latter is the
+    # runner image's name rather than a requestable label, and asking for it
+    # queues the job forever instead of failing it. macos-26 is macOS 26 on
+    # arm64, so the release is still built on the declared toolchain.
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Report toolchain
+        run: xcodebuild -version
+
+      # Publishing is gated on `github.event_name == 'push'`, not on ref_type
+      # alone: workflow_dispatch's ref picker offers tags, so a dry run can be
+      # started from a tag ref and would otherwise take the publish path.
+      - name: Work out the version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            tag="${GITHUB_REF_NAME}"
+            # CFBundleShortVersionString is up to three period-separated
+            # integers. A tag that does not reduce to one would otherwise be
+            # discovered by Finder showing a blank version, after publishing.
+            if ! printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::tag ${tag} is not vMAJOR.MINOR.PATCH"
+              exit 1
+            fi
+            version="${tag#v}"
+            label="${version}"
+          else
+            # No tag to read a version from. 0.0.0 is a valid marketing version
+            # — "0.0.0-dryrun" is not, and would build a bundle unlike the one
+            # a tag push produces, defeating the point of the rehearsal.
+            version="0.0.0"
+            label="0.0.0-dryrun"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "label=${label}" >> "$GITHUB_OUTPUT"
+          echo "Building version ${version} (${label})"
+
+      # The dmg is built from the same commit these assert against, and CLAUDE.md
+      # treats the tests as the thing standing between a wrong implementation and
+      # an app that merely looks fine. A release that skipped them would be the
+      # one build nobody had checked.
+      - name: Run the tests
+        run: swift test
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate the Xcode project
+        run: xcodegen generate
+
+      # Release, not Debug. CODE_SIGN_INJECT_BASE_ENTITLEMENTS is NO on this
+      # configuration, so the built app carries only what App/Candido.entitlements
+      # declares — asserted below, against that file, before anything is published.
+      - name: Build the app
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project Candido.xcodeproj \
+            -scheme Candido \
+            -configuration Release \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath DerivedData \
+            MARKETING_VERSION="${{ steps.version.outputs.version }}" \
+            build \
+            | grep -E "error:|BUILD"
+
+      # The staging folder is what the user sees when the dmg mounts: the app,
+      # and an alias to drag it onto. Plain hdiutil only — create-dmg with
+      # AppleScript window styling hangs on headless runners.
+      - name: Stage and package the dmg
+        run: |
+          set -euo pipefail
+          rm -rf staging
+          mkdir staging
+          cp -R DerivedData/Build/Products/Release/Candido.app staging/
+          ln -s /Applications staging/Applications
+          hdiutil create \
+            -volname Candido \
+            -srcfolder staging \
+            -ov \
+            -format UDZO \
+            Candido.dmg
+          ls -lh Candido.dmg
+
+      # This step is the point of the workflow. Any failure here fails the run
+      # before a user can download something that is not what the README
+      # promises — and the Release build has never been launched by anyone, so
+      # whoever downloads the dmg is its first real user.
+      - name: Verify the artifact
+        run: |
+          set -euo pipefail
+          app=DerivedData/Build/Products/Release/Candido.app
+
+          echo "--- signature ---"
+          codesign -dv "$app" 2>&1 | tee /tmp/codesign.txt
+          grep -q "Signature=adhoc" /tmp/codesign.txt \
+            || { echo "::error::expected an ad-hoc signature"; exit 1; }
+          grep -q "runtime" /tmp/codesign.txt \
+            || { echo "::error::hardened runtime flag missing"; exit 1; }
+
+          echo "--- entitlements ---"
+          # Compared as a set against App/Candido.entitlements rather than
+          # against key names repeated here, so that adding a legitimate
+          # entitlement is a one-file change instead of a release failure with a
+          # misleading message.
+          #
+          # The comparison is exact in both directions, and the extra-key half is
+          # the half that matters: com.apple.security.get-task-allow is what
+          # would leave the shipped app attachable by a debugger, and it appears
+          # by being present, not by being absent.
+          codesign -d --entitlements - --xml "$app" 2>/dev/null > /tmp/built.plist
+          plutil -convert json -o /tmp/built.json /tmp/built.plist
+          plutil -convert json -o /tmp/declared.json App/Candido.entitlements
+          python3 - <<'PY'
+          import json, sys
+
+          declared = set(json.load(open("/tmp/declared.json")))
+          built = set(json.load(open("/tmp/built.json")))
+
+          for key in sorted(declared - built):
+              print(f"::error::missing entitlement {key}")
+          for key in sorted(built - declared):
+              print(f"::error::unexpected entitlement {key}")
+
+          if declared != built:
+              sys.exit(1)
+          print(f"entitlements match the {len(declared)} declared in App/Candido.entitlements")
+          PY
+
+          echo "--- dmg contents ---"
+          mountpoint=$(mktemp -d)
+          hdiutil attach Candido.dmg -mountpoint "$mountpoint" -nobrowse -readonly
+          trap 'hdiutil detach "$mountpoint" -force || true' EXIT
+          ls -la "$mountpoint"
+          [ -d "$mountpoint/Candido.app" ] \
+            || { echo "::error::Candido.app missing from the dmg"; exit 1; }
+          [ -L "$mountpoint/Applications" ] \
+            || { echo "::error::/Applications alias missing from the dmg"; exit 1; }
+          hdiutil detach "$mountpoint"
+          trap - EXIT
+
+          echo "artifact verified"
+
+      # Dry run: no release, just something to download and open by hand.
+      - name: Upload the dmg as an artifact
+        if: github.event_name != 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Candido-dmg-${{ steps.version.outputs.label }}
+          path: Candido.dmg
+          if-no-files-found: error
+
+      # The asset name is never versioned. The README's download button points
+      # at /releases/latest/download/Candido.dmg, which only resolves against a
+      # stable asset name.
+      - name: Publish the release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" \
+            Candido.dmg \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes

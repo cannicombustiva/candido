@@ -18,3 +18,7 @@ jobtracker-backup*.json
 
 # Scratch space for local-markdown notes and throwaway prototypes
 .scratch/
+
+# Release packaging artifacts (the release workflow builds these at the repo root)
+staging/
+*.dmg
