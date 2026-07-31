@@ -49,6 +49,10 @@ Three rules about committing, each with a reason that stands on its own:
   commit around them and do not revert them. They are someone's work in
   progress, and neither guessing is yours to make.
 
+The settings that enforce this server-side, and the reasoning for each, are in
+`docs/branch-protection.md`. They are applied by hand by the owner — an agent
+does not change repo settings.
+
 Every Debug build uses the bundle identifier `com.candido.Candido.dev`, and a
 sandboxed app's container is keyed by that identifier. All Debug builds
 therefore read and write one store — launch the app from one session at a time.
