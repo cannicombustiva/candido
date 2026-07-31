@@ -8,9 +8,7 @@ Local-only SwiftData, no account, no server, no paid Apple Developer account.
 
 [![Download for macOS](docs/assets/download-button.svg)](https://github.com/cannicombustiva/candido/releases/latest/download/Candido.dmg)
 
-<!-- SCREENSHOT GOES HERE — see issue #63. The image is captured from the Debug
-     build, which has its own sandbox container, so it shows fictional rows
-     rather than the owner's real applications. -->
+![Candido tracking seven applications, two of them stale](docs/assets/screenshot.png)
 
 macOS 15 or later, Apple Silicon. It is **unsigned**, so the first launch takes
 one trip through System Settings — [see below](#first-launch).
