@@ -5,18 +5,26 @@ ones that have gone quiet. `SPEC.md` is the contract; this file is the glossary.
 
 ## Where we are
 
-**Current milestone: M4** — parallel subagents on independent tracks. Its output
-is the export mirror (landed, #39) alongside `MenuBarExtra` (not built).
+**Current milestone: M5** — `/code-review` and `/security-review`: does the
+reviewer catch what the owner cannot?
+
+M4 closed as a **negative result**. Parallel subagents on independent tracks cost
+more coordination than they returned for a solo owner, so the worktree machinery
+is gone and only the export mirror (landed, #39) came out of the milestone;
+`MenuBarExtra` was never built. See
+`docs/adr/0003-parallel-tracks-cost-more-than-they-returned.md`.
 
 `SPEC.md`'s milestone table says what each milestone *tests*; this line says
 which one is *running*. Update it when a milestone ends.
 
-Do not infer the milestone from branch names. The script that created branches
-hardcoded an `m2/` prefix, so every branch between M2 ending on 22 Jul and the
-script's deletion was misnamed, and those branches are still on the remote. The
-number decides which score file a run lands in and which checklist items the
-yardstick excludes from it, so a wrong guess mis-scores the run — reading the
-prefixes once put M4's delete work in a milestone that would have excluded it.
+Do not infer the milestone from branch names. This is history rather than a live
+hazard: branches are now `<issue>-<slug>` with no prefix, but the script that
+used to create them hardcoded `m2/`, so every branch between M2 ending on 22 Jul
+and the script's deletion was misnamed, and those branches are still on the
+remote. The number decides which score file a run lands in and which checklist
+items the yardstick excludes from it, so a wrong guess still mis-scores the run —
+reading the prefixes once put M4's delete work in a milestone that would have
+excluded it.
 
 ## Language
 
