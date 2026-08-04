@@ -47,7 +47,7 @@ body:
         silence a Status tolerates, the views, or the backup behaviour. If you
         are not sure, choose the last option — that is what triage is for.
       options:
-        - Choose an answer
+        - "Choose whether SPEC.md changes"
         - "No — it fits what SPEC.md already promises"
         - "Yes — it changes something SPEC.md states"
         - "Not sure"
