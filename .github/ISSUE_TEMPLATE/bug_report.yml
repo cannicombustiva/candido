@@ -36,6 +36,7 @@ body:
       label: Status of the Application
       description: Where the Application stood when you saw this.
       options:
+        - Choose a Status
         - applied
         - screening
         - interviewing
@@ -66,6 +67,7 @@ body:
         Stale rows are styled rather than hidden, so this is what you could see
         in the list.
       options:
+        - Choose what the row looked like
         - Styled as Stale, and it should not have been
         - Not styled as Stale, and it should have been
         - Styled as Stale, but the Stale view did not list it
