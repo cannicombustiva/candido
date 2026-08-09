@@ -54,8 +54,8 @@ extension Tone {
     /// green that the pipeline does not have.
     fileprivate var fill: Double {
         switch self {
-        case .pending: 0.10
-        case .moving: 0.28
+        case .pending: 0.06
+        case .moving: 0.34
         case .deep, .yours, .spent: 0.18
         }
     }
