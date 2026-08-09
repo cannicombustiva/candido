@@ -18,29 +18,45 @@ struct StatusChip: View {
             .font(.caption.weight(.medium))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            // A tint at both strengths rather than a solid fill: the same hue
-            // reads on the label and behind it, in light appearance and dark,
-            // without the white-on-pale-blue the pipeline's palest tone would
-            // otherwise need.
-            .background(status.tone.color.opacity(0.18), in: .capsule)
+            // The hue is on the label, the shade is in the fill behind it. A
+            // literally pale label — blue mixed toward white — computes to
+            // about 2.5:1 against a light background, which is unreadable, and
+            // the word is the part that has to survive. Holding the label at
+            // one blue and moving the fill keeps `applied` paler than
+            // `screening` in both appearances without spending the contrast.
+            .background(status.tone.color.opacity(status.tone.fill), in: .capsule)
             .foregroundStyle(status.tone.color)
     }
 }
 
 extension Tone {
-    /// The one place a tone becomes a color.
+    /// The hue: which colour the tone is.
     ///
-    /// The three waiting tones deepen through the blues in pipeline order, so
-    /// how far along a row is reads off the shade. Orange is absent on
-    /// purpose — it belongs to Stale, on the last-contact date and nowhere
-    /// else.
+    /// `applied` and `screening` share one blue on purpose — hue is the
+    /// Standing, and they share a Standing. `interviewing` is indigo because
+    /// the contract names indigo. Orange is absent on purpose: it belongs to
+    /// Stale, on the last-contact date and nowhere else.
     fileprivate var color: Color {
         switch self {
-        case .pending: .cyan
-        case .moving: .blue
+        case .pending, .moving: .blue
         case .deep: .indigo
         case .yours: .green
         case .spent: .gray
+        }
+    }
+
+    /// The shade: how strongly the capsule is filled, which is how far along
+    /// the pipeline the row is.
+    ///
+    /// Only the two blues differ — the pale/medium pair the contract asks for.
+    /// The rest sit at one weight, because their hues already tell them apart
+    /// and varying the fill as well would imply an ordering between grey and
+    /// green that the pipeline does not have.
+    fileprivate var fill: Double {
+        switch self {
+        case .pending: 0.10
+        case .moving: 0.28
+        case .deep, .yours, .spent: 0.18
         }
     }
 }
