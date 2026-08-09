@@ -44,6 +44,24 @@ Where an Application currently stands: `applied`, `screening`, `interviewing`,
 `offer`, `rejected`, or `withdrawn`.
 _Avoid_: State, stage, phase
 
+### Correcting a name
+
+**Rename**:
+Correcting the name of a Company. The name identity is decided on moves with
+the one that is displayed — fixing casing and fixing letters are one act. It is
+a correction, not management: it is reached from a row, there is still no
+company screen and no company list, and the Company it names is still one that
+came into existence by being applied to. A Rename onto a name already taken is
+a Merge.
+_Avoid_: Edit, update, change, relabel
+
+**Merge**:
+What a Rename becomes when the name is already taken by another Company. The
+Applications change hands, and the Company they left is Cleared away. Nothing
+is Deleted — a Merge moves work, it never destroys it, which is why it is a
+different word from Delete and asks a different question.
+_Avoid_: Combine, consolidate, dedupe, fold
+
 ### Attention
 
 **Stale**:
