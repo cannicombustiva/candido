@@ -197,8 +197,13 @@ private struct ApplicationTable: View {
                 Text($0.title)
             }
             TableColumn(ApplicationSortField.status) {
-                Text($0.status.displayName)
+                StatusChip(status: $0.status)
             }
+            // Wide enough for the longest Status inside a capsule. The word is
+            // not decoration — it is what the column is read and sorted by —
+            // and at the default width the capsule's padding truncated
+            // "Interviewing" and "Withdrawn" to ellipses.
+            .width(min: 104, ideal: 112)
             TableColumn(ApplicationSortField.appliedDate) {
                 Text($0.appliedDate, format: .dateTime.day().month(.abbreviated).year())
             }
