@@ -25,10 +25,22 @@ struct CompanyRenameSheet: View {
         _typedName = State(initialValue: company.name)
     }
 
-    /// `nil` only when the name is blank, which the package refuses. The button
-    /// goes with it, so the refusal is visible before it is attempted.
+    /// `nil` when the package will not plan this rename. The button goes with
+    /// it, so a refusal is visible before it is attempted.
     private var plan: CompanyRenamePlan? {
         try? company.planRename(to: typedName, in: context)
+    }
+
+    /// Why there is no plan, in the owner's terms.
+    ///
+    /// A blank name and a store that could not be read are told apart rather
+    /// than both reported as a typing mistake — the owner can fix the first and
+    /// can only be misled by being blamed for the second.
+    private var refusal: String? {
+        guard plan == nil else { return nil }
+        return Company.isKeepableName(typedName)
+            ? "Could not work out what renaming this would do."
+            : "A company name has to have something in it."
     }
 
     var body: some View {
@@ -40,7 +52,7 @@ struct CompanyRenameSheet: View {
                 .textFieldStyle(.roundedBorder)
                 .onSubmit { commit() }
 
-            Text(plan?.message ?? "A company name has to have something in it.")
+            Text(plan?.message ?? refusal ?? "")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -69,13 +81,9 @@ struct CompanyRenameSheet: View {
     private func commit() {
         guard let plan else { return }
         plan.apply(in: context)
-        do {
-            try context.save()
-            dismiss()
-        } catch {
-            // Left open rather than dismissed: a merge that did not reach the
-            // store must not look like one that did.
-            failure = "Could not save the change: \(error.localizedDescription)"
-        }
+        failure = context.saveOrDescribeFailure()
+        // Left open on failure rather than dismissed: a merge that did not
+        // reach the store must not look like one that did.
+        if failure == nil { dismiss() }
     }
 }

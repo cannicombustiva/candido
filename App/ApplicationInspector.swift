@@ -136,17 +136,7 @@ struct ApplicationInspector: View {
         save()
     }
 
-    /// SwiftData autosaves, but a relaunch right after a keystroke is exactly
-    /// the case the owner will hit, so each edit is written through.
-    ///
-    /// A failure is shown rather than swallowed: an edit that never reached
-    /// the store would otherwise look exactly like one that did.
     private func save() {
-        do {
-            try context.save()
-            failure = nil
-        } catch {
-            failure = "Could not save the change: \(error.localizedDescription)"
-        }
+        failure = context.saveOrDescribeFailure()
     }
 }

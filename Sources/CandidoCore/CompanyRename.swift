@@ -8,8 +8,8 @@ import SwiftData
 /// shown and what gets applied.
 public struct CompanyRenamePlan {
     let company: Company
-    let name: String
-    let normalizedName: String
+    let newName: String
+    let newNormalizedName: String
 
     /// The Company this rename would merge into, if the name is already taken
     /// by one that is not this Company. `nil` for a plain rename.
@@ -24,8 +24,16 @@ public struct CompanyRenamePlan {
     /// How many Applications this act moves or re-labels — the blast radius the
     /// dialog names, because it opens from one Application's panel and the
     /// Company name belongs to more than that one.
-    public var affectedCount: Int {
-        company.applications.filter { !$0.isGoing }.count
+    public var affectedCount: Int { standing.count }
+
+    /// The Applications this act actually touches. One definition, read by both
+    /// the count the dialog promises and the loop that moves them — if they
+    /// disagreed, the dialog would name a number the merge does not honour.
+    ///
+    /// An Application already deleted and waiting for the context to work
+    /// through it is not work any more, and is neither counted nor moved.
+    private var standing: [Application] {
+        company.applications.filter { !$0.isGoing }
     }
 
     /// What the confirming button says. A merge is a different act from a
@@ -55,8 +63,8 @@ public struct CompanyRenamePlan {
     /// Performs the rename.
     public func apply(in context: ModelContext) {
         guard let destination else {
-            company.name = name
-            company.normalizedName = normalizedName
+            company.name = newName
+            company.normalizedName = newNormalizedName
             return
         }
 
@@ -64,7 +72,7 @@ public struct CompanyRenamePlan {
         // a source cleared away before its work moved would take that work with
         // it. Applications change hands first; the source is offered to
         // `clearAwayIfEmpty` after, and never to a bare `context.delete`.
-        for application in Array(company.applications) where !application.isGoing {
+        for application in standing {
             application.company = destination
         }
         company.clearAwayIfEmpty(from: context)
@@ -77,17 +85,12 @@ extension Company {
         -> CompanyRenamePlan
     {
         let normalized = try Company.normalize(name)
-
-        var descriptor = FetchDescriptor<Company>(
-            predicate: #Predicate { $0.normalizedName == normalized }
-        )
-        descriptor.fetchLimit = 1
-        let taken = try context.fetch(descriptor).first
+        let taken = try Company.existing(normalizedName: normalized, in: context)
 
         return CompanyRenamePlan(
             company: self,
-            name: name.trimmed,
-            normalizedName: normalized,
+            newName: name.trimmed,
+            newNormalizedName: normalized,
             // A name that folds to this Company's own identity is not a
             // collision — it is a rewrite of what is displayed.
             destination: taken === self ? nil : taken

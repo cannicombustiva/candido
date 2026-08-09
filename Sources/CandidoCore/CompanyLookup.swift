@@ -36,8 +36,24 @@ extension Company {
     /// A name with something in it. One rule, obeyed wherever a company name
     /// arrives: a name of only spaces would fold to `""` and collide with every
     /// other empty name, so it identifies nothing.
-    static func isKeepableName(_ name: String) -> Bool {
+    public static func isKeepableName(_ name: String) -> Bool {
         !name.trimmed.isEmpty
+    }
+
+    /// The Company already answering to this folded name, if there is one.
+    ///
+    /// The one place that knows how a Company is looked up by identity, so
+    /// find-or-create and rename cannot come to different conclusions about
+    /// what "a name already taken" means.
+    static func existing(normalizedName: String, in context: ModelContext) throws
+        -> Company?
+    {
+        let folded = normalizedName
+        var descriptor = FetchDescriptor<Company>(
+            predicate: #Predicate { $0.normalizedName == folded }
+        )
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first
     }
 
     /// Returns the Company this name refers to, creating it if this is the
@@ -51,12 +67,7 @@ extension Company {
     {
         let normalized = try normalize(name)
 
-        var descriptor = FetchDescriptor<Company>(
-            predicate: #Predicate { $0.normalizedName == normalized }
-        )
-        descriptor.fetchLimit = 1
-
-        if let existing = try context.fetch(descriptor).first {
+        if let existing = try existing(normalizedName: normalized, in: context) {
             return existing
         }
 
