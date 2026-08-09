@@ -33,6 +33,8 @@ struct ApplicationInspector: View {
 
     @State private var failure: String?
 
+    @State private var isRenaming = false
+
     init(application: Application) {
         self.application = application
         _titleText = State(initialValue: application.title)
@@ -42,7 +44,16 @@ struct ApplicationInspector: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent("Company", value: application.company.name)
+                // Read-only still — a Company is never managed directly. The
+                // one thing offered is a correction to a name that would
+                // otherwise be permanent.
+                LabeledContent("Company") {
+                    HStack(spacing: 8) {
+                        Text(application.company.name)
+                        Button("Rename…") { isRenaming = true }
+                            .buttonStyle(.link)
+                    }
+                }
 
                 TextField("Title", text: $titleText)
                     .onChange(of: titleText) { commitTitle() }
@@ -110,6 +121,9 @@ struct ApplicationInspector: View {
         // Selecting another row replaces this view, taking a URL that was
         // typed but never submitted with it unless it is written first.
         .onDisappear { commitJobURL() }
+        .sheet(isPresented: $isRenaming) {
+            CompanyRenameSheet(company: application.company)
+        }
     }
 
     private func commitTitle() {
