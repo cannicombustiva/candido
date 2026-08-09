@@ -43,12 +43,40 @@ Two `@Model` types, both in `CandidoCore`.
 | `applications` | `[Application]` | One-to-many, inverse of `Application.company` |
 
 Companies are never managed directly by the user. There is no "manage companies"
-screen. Typing a new name in the add sheet silently creates one.
+screen and no company list. Typing a new name in the add sheet silently creates
+one.
 
 **Find-or-create is case- and whitespace-insensitive.** `"spotify"`,
 `"Spotify"`, and `" Spotify "` all resolve to the same `Company`. The unique
 constraint alone does not do this — it is logic in the package, and it is
-unit-tested. First spelling entered wins as the stored display name.
+unit-tested. First spelling entered wins as the stored display name, and goes
+on winning until the name is renamed.
+
+#### Renaming corrects a name. It is not managing a Company
+
+A name typed once with a typo in it is otherwise that name forever — in the
+table and in every backup. So the inspector offers **Rename…** on the Company
+the selected row is filed under, and that is the whole of it: no company screen,
+no list, a correction reachable from a row. The dialog says how many
+Applications share the name, because the panel it opens from is one
+Application's and the name is not.
+
+A rename writes both the display name and the folded name identity is decided
+on. Fixing casing and fixing letters are one act, not two. A blank name is
+refused, by the same rule the add sheet obeys. A name that folds to the Company's
+own identity only rewrites what is displayed.
+
+**A rename onto a name already taken is a merge**, and is confirmed as one, in
+words naming both Companies and the count. The Applications change hands, the
+emptied Company is cleared away by the rule below, and nothing is deleted.
+Refusing the rename instead would break it in the case that motivates it: you
+notice the typo because you typed the name correctly the second time, so the
+good spelling is already in the store.
+
+Import does not know a rename happened. A backup written before one still names
+the old Company, and importing it re-creates that Company and takes its
+Applications back. That is the price already paid for an import that merges and
+never deletes — the store can only grow.
 
 ### Application
 
@@ -120,8 +148,17 @@ Single window, `NavigationSplitView`:
 
 Rules:
 
+- **Status is a colored chip**, in the table and nowhere else. The word stays
+  inside it — color alone is unreadable to half the people who might see my
+  screen, and the column is a sort key. Hue is the standing, shade is the
+  distance along: `applied` pale blue, `screening` medium blue, `interviewing`
+  indigo, `offer` green, `rejected` and `withdrawn` the same grey. The two
+  terminal statuses share a grey on purpose — they share a standing, and a
+  visual difference would claim one exists.
 - **Stale rows are styled, not hidden.** Warning color on the date column, plus
   the sidebar filter. If ghosting hides rows I will forget those companies exist.
+  Orange is staleness and nothing else: a chip never restyles because a row went
+  quiet, or the one thing warning me is two things.
 - **Editing happens in the inspector.** Not inline in the table — inline editing
   in SwiftUI `Table` will eat a weekend.
 - **Adding is toolbar `+` → sheet.** Not a blank row appended to the table.
