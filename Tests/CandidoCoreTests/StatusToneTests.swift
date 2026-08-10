@@ -34,8 +34,9 @@ struct StatusToneTests {
     }
 
     /// `applied` is the only Status the contract makes pale. Every other one
-    /// reads at the same weight, including `interviewing` — it is told apart by
-    /// its hue, not by being darker still.
+    /// carries the same Shade, `interviewing` included — it is told apart by
+    /// its hue, not by being paler still. What opacity each ends up rendering
+    /// at is the view's business and is not what this asserts.
     ///
     /// This is the guard against re-encoding "shade is the distance along",
     /// which `SPEC.md` no longer says and candido#86 settled against. A second

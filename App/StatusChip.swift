@@ -52,9 +52,9 @@ extension Tone {
         }
     }
 
-    /// How strongly the capsule is filled — the rendering of `Shade`, and only
-    /// that. Which tone is the pale one is `CandidoCore`'s decision and is
-    /// tested there; this turns that decision into a number.
+    /// How strongly the capsule is filled. Which tone is the pale one is
+    /// `CandidoCore`'s decision and is tested there; this turns that decision
+    /// into a number, and then makes one further choice of its own.
     ///
     /// The standard weights are not a second shade step. They differ because a
     /// medium blue needs more fill to separate from a pale blue of the same hue
