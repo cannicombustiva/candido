@@ -11,7 +11,8 @@ import SwiftUI
 /// Which tone a Status carries is `CandidoCore`'s decision. Turning a tone into
 /// a `Color` is this view's, and so — for now, wrongly — is how strongly each
 /// tone fills its capsule: that decision belongs in the package where the tests
-/// reach it, and moving it is #87's first item, blocked on #86.
+/// reach it, and moving it is #87's first item, unblocked now that #86 is
+/// settled.
 struct StatusChip: View {
     let status: Status
 
@@ -39,11 +40,11 @@ extension Tone {
     /// and medium live in `fill` below rather than in two hues, because a
     /// literally pale label is unreadable.
     ///
-    /// The same paragraph of `SPEC.md` also says "hue is the standing", which
-    /// `interviewing`'s indigo contradicts. #86 decides which of the two the
-    /// chip should obey; until it does, this map follows the enumerated
-    /// colours. Orange is absent on purpose: it belongs to Stale, on the
-    /// last-contact date and nowhere else.
+    /// The list is the whole contract — `SPEC.md` says to read it as a list and
+    /// not as a rule, so `interviewing`'s indigo is not a promise that hue
+    /// tracks standing, and nothing here should be generalised. That was #86,
+    /// and it is settled. Orange is absent on purpose: it belongs to Stale, on
+    /// the last-contact date and nowhere else.
     fileprivate var color: Color {
         switch self {
         case .pending, .moving: .blue
@@ -57,10 +58,11 @@ extension Tone {
     ///
     /// Only `pending` and `moving` differ, giving `applied` and `screening` the
     /// pale and medium the contract names. Everything else sits at one weight,
-    /// `deep` included — so the fills do not deepen along the pipeline, which is
-    /// half of what #86 is open about. The other three hues already tell each
-    /// other apart, and varying their fills too would imply an ordering between
-    /// grey and green that the pipeline does not have.
+    /// `deep` included: `SPEC.md` asks for a shade difference between those two
+    /// and nowhere else, so the fills are not a pipeline ordering and must not
+    /// be read as one. The other hues already tell each other apart, and varying
+    /// their fills too would imply an ordering between grey and green that the
+    /// pipeline does not have.
     fileprivate var fill: Double {
         switch self {
         case .pending: 0.10

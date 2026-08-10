@@ -6,10 +6,12 @@
 ///
 /// It does more than that today, and should not: how strongly each tone fills
 /// its capsule is decided in `App/StatusChip.swift`, out of reach of the tests.
-/// That is #87's first item, blocked on #86.
+/// That is #87's first item, unblocked now that #86 is settled.
 ///
 /// The cases are declared in pipeline order, and that is all their order says.
-/// No shade ordering is asserted here, because none is settled — see #86.
+/// The contract asks for one shade difference — `applied` paler than
+/// `screening` — and none anywhere else, so there is no progression here to
+/// encode beyond that pair.
 ///
 /// "Pending" is a word `CONTEXT.md` tells you to avoid for a Standing. It is
 /// reused here for an appearance, and naming a Tone is not naming a Standing —
