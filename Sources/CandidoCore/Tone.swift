@@ -1,21 +1,27 @@
 /// What a Status looks like in the table's chip, said semantically.
 ///
-/// A token rather than a color: which Status reads as which shade is a
-/// decision, and it lives here where `swift test` reaches it. The app target
-/// turns a token into a `Color` and does nothing else — no view decides what a
-/// Status means.
+/// A token rather than a color: which Status carries which tone is a decision,
+/// and it lives here where `swift test` reaches it. The app target turns a token
+/// into a `Color`.
 ///
-/// The cases are ordered as the pipeline is, so the deepening of the three
-/// "awaits their reply" tones is visible in the type.
-public enum Tone: Equatable, Sendable, CaseIterable {
-    /// Applied for, nothing back yet. Palest of the waiting tones.
+/// It does more than that today, and should not: how strongly each tone fills
+/// its capsule is decided in `App/StatusChip.swift`, out of reach of the tests.
+/// That is #87's first item, blocked on #86.
+///
+/// The cases are declared in pipeline order, and that is all their order says.
+/// No shade ordering is asserted here, because none is settled — see #86.
+///
+/// "Pending" is a word `CONTEXT.md` tells you to avoid for a Standing. It is
+/// reused here for an appearance, and naming a Tone is not naming a Standing —
+/// see the glossary's Tone entry.
+public enum Tone: Equatable, Sendable {
+    /// Applied for, nothing back yet. The first of the waiting tones.
     case pending
 
     /// In screening — they have answered once.
     case moving
 
-    /// Interviewing. The deepest of the waiting tones, because it is the
-    /// furthest in.
+    /// Interviewing: the furthest in of the waiting tones.
     case deep
 
     /// The move is the owner's: an offer.

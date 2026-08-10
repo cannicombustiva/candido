@@ -94,9 +94,10 @@ _Avoid_: Threshold, limit, timeout, grace period, deadline
 
 **Standing**:
 Whose move it is, and whether an Application is still in play. Every Status has
-exactly one Standing, and it is the only classification of Status there is —
-Awaits their reply, Awaits your move and Over are the three Standings; Terminal
-and the silence a Status tolerates are read off them.
+exactly one Standing — Awaits their reply, Awaits your move and Over are the
+three Standings; Terminal and the silence a Status tolerates are read off them.
+It is the classification of Status that decides behaviour: Tone also classifies
+Status, but only for how the chip looks.
 _Avoid_: State, category, kind
 
 **Awaits their reply**:
@@ -121,6 +122,21 @@ _Avoid_: Closed, finished, dead, done
 A Status the Application does not move on from: `rejected` or `withdrawn`.
 Its Standing is Over. Terminal is the Status, not the Standing.
 _Avoid_: Closed, finished, dead
+
+### The chip
+
+**Tone**:
+How a Status reads in the Status column's chip, named as an appearance rather
+than as a colour. A classification of Status alongside Standing, but a purely
+visual one: it decides appearance and nothing else, so no rule about staleness,
+filtering or Terminal is ever read off it. It refines Standing rather than
+cutting across it — every Tone belongs to exactly one Standing, so two Statuses
+sharing a Tone always share a Standing, and that much is tested. What is not
+settled is which hues and shades the Tones should map to; issue #86 decides
+that, and until it does neither this entry nor the code states a rule for it.
+`pending` is a word this glossary avoids for a Standing, reused here for an
+appearance.
+_Avoid_: Style, theme, severity
 
 ### Leaving the store
 

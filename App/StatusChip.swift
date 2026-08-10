@@ -8,8 +8,10 @@ import SwiftUI
 /// cannot separate these hues, and the column is a sort key — the text has to
 /// be there to be sorted by and read.
 ///
-/// Which tone a Status carries is `CandidoCore`'s decision. This view only
-/// turns a tone into a `Color`, so no view ever decides what a Status means.
+/// Which tone a Status carries is `CandidoCore`'s decision. Turning a tone into
+/// a `Color` is this view's, and so — for now, wrongly — is how strongly each
+/// tone fills its capsule: that decision belongs in the package where the tests
+/// reach it, and moving it is #87's first item, blocked on #86.
 struct StatusChip: View {
     let status: Status
 
@@ -32,10 +34,16 @@ struct StatusChip: View {
 extension Tone {
     /// The hue: which colour the tone is.
     ///
-    /// `applied` and `screening` share one blue on purpose — hue is the
-    /// Standing, and they share a Standing. `interviewing` is indigo because
-    /// the contract names indigo. Orange is absent on purpose: it belongs to
-    /// Stale, on the last-contact date and nowhere else.
+    /// One blue for both `applied` and `screening`, indigo, green, one shared
+    /// grey. `SPEC.md` enumerates a *pale* blue and a *medium* blue; the pale
+    /// and medium live in `fill` below rather than in two hues, because a
+    /// literally pale label is unreadable.
+    ///
+    /// The same paragraph of `SPEC.md` also says "hue is the standing", which
+    /// `interviewing`'s indigo contradicts. #86 decides which of the two the
+    /// chip should obey; until it does, this map follows the enumerated
+    /// colours. Orange is absent on purpose: it belongs to Stale, on the
+    /// last-contact date and nowhere else.
     fileprivate var color: Color {
         switch self {
         case .pending, .moving: .blue
@@ -45,13 +53,14 @@ extension Tone {
         }
     }
 
-    /// The shade: how strongly the capsule is filled, which is how far along
-    /// the pipeline the row is.
+    /// The shade: how strongly the capsule is filled.
     ///
-    /// Only the two blues differ — the pale/medium pair the contract asks for.
-    /// The rest sit at one weight, because their hues already tell them apart
-    /// and varying the fill as well would imply an ordering between grey and
-    /// green that the pipeline does not have.
+    /// Only `pending` and `moving` differ, giving `applied` and `screening` the
+    /// pale and medium the contract names. Everything else sits at one weight,
+    /// `deep` included — so the fills do not deepen along the pipeline, which is
+    /// half of what #86 is open about. The other three hues already tell each
+    /// other apart, and varying their fills too would imply an ordering between
+    /// grey and green that the pipeline does not have.
     fileprivate var fill: Double {
         switch self {
         case .pending: 0.10
