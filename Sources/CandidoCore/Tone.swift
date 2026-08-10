@@ -1,25 +1,30 @@
 /// What a Status looks like in the table's chip, said semantically.
 ///
-/// A token rather than a color: which Status reads as which shade is a
-/// decision, and it lives here where `swift test` reaches it. The app target
-/// turns a token into a `Color` and does nothing else — no view decides what a
-/// Status means.
+/// A token rather than a color: which Status carries which tone is a decision,
+/// and it lives here where `swift test` reaches it. The app target turns a token
+/// into a `Color`.
 ///
-/// The cases are ordered as the pipeline is, so the deepening of the three
-/// "awaits their reply" tones is visible in the type.
+/// It does more than that today, and should not: the pale-vs-medium
+/// relationship between the tones is a fill weight in `App/StatusChip.swift`,
+/// out of reach of the tests. That is #87's first item, blocked on #86.
+///
+/// The cases are declared in pipeline order. That is the order they are meant
+/// to deepen in; it is not what the app renders today, and issue #86 is open on
+/// what the deepening should be. Nothing here asserts a shade ordering, because
+/// none is settled — the app target's fill weights are the only place a shade is
+/// chosen, and #87 moves them here once #86 answers.
+///
+/// The names "pending" and "moving" are words `CONTEXT.md` tells you to avoid
+/// for a Standing. They are borrowed here for appearances and say nothing about
+/// whose move it is — see the glossary's Tone entry.
 public enum Tone: Equatable, Sendable {
-    /// Applied for, nothing back yet. Palest of the waiting tones.
-    ///
-    /// "Pending" is a word `CONTEXT.md` tells you to avoid for a Standing. It
-    /// is borrowed here for a shade and means nothing about whose move it is —
-    /// see the glossary's Tone entry.
+    /// Applied for, nothing back yet. The first of the waiting tones.
     case pending
 
     /// In screening — they have answered once.
     case moving
 
-    /// Interviewing. The deepest of the waiting tones, because it is the
-    /// furthest in.
+    /// Interviewing: the furthest in of the waiting tones.
     case deep
 
     /// The move is the owner's: an offer.
