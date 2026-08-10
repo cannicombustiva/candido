@@ -150,11 +150,14 @@ Rules:
 
 - **Status is a colored chip**, in the table and nowhere else. The word stays
   inside it — color alone is unreadable to half the people who might see my
-  screen, and the column is a sort key. Hue is the standing, shade is the
-  distance along: `applied` pale blue, `screening` medium blue, `interviewing`
-  indigo, `offer` green, `rejected` and `withdrawn` the same grey. The two
-  terminal statuses share a grey on purpose — they share a standing, and a
-  visual difference would claim one exists.
+  screen, and the column is a sort key. The colours are the contract, and they
+  are these: `applied` pale blue, `screening` medium blue, `interviewing`
+  indigo, `offer` green, `rejected` and `withdrawn` the same grey. Read them as
+  a list, not as a rule. `rejected` and `withdrawn` share a grey on purpose — a
+  visual difference would claim a distinction that does not exist — and
+  `applied` and `screening` differ by shade alone because they are one step
+  apart. Nothing more should be inferred: `interviewing`'s indigo is not a
+  promise that hue tracks standing.
 - **Stale rows are styled, not hidden.** Warning color on the date column, plus
   the sidebar filter. If ghosting hides rows I will forget those companies exist.
   Orange is staleness and nothing else: a chip never restyles because a row went

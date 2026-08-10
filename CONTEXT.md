@@ -131,11 +131,11 @@ than as a colour. A classification of Status alongside Standing, but a purely
 visual one: it decides appearance and nothing else, so no rule about staleness,
 filtering or Terminal is ever read off it. It refines Standing rather than
 cutting across it — every Tone belongs to exactly one Standing, so two Statuses
-sharing a Tone always share a Standing, and that much is tested. What is not
-settled is which hues and shades the Tones should map to; issue #86 decides
-that, and until it does neither this entry nor the code states a rule for it.
-`pending` is a word this glossary avoids for a Standing, reused here for an
-appearance.
+sharing a Tone always share a Standing, and that much is tested. Which colour
+each Tone renders as is `SPEC.md`'s enumerated list and not a rule to
+generalise: only `applied` and `screening` are required to differ by shade, and
+`interviewing`'s indigo promises nothing about hue tracking Standing. `pending`
+is a word this glossary avoids for a Standing, reused here for an appearance.
 _Avoid_: Style, theme, severity
 
 ### Leaving the store
