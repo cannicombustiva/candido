@@ -32,10 +32,12 @@ struct StatusChip: View {
 extension Tone {
     /// The hue: which colour the tone is.
     ///
-    /// `applied` and `screening` share one blue on purpose — hue is the
-    /// Standing, and they share a Standing. `interviewing` is indigo because
-    /// the contract names indigo. Orange is absent on purpose: it belongs to
-    /// Stale, on the last-contact date and nowhere else.
+    /// These are the colours `SPEC.md` enumerates, taken literally: two blues,
+    /// indigo, green, one shared grey. The same paragraph also says "hue is the
+    /// standing", which `interviewing`'s indigo contradicts — #86 decides which
+    /// of the two the chip should obey, and until it does this map is the
+    /// enumerated list and nothing more. Orange is absent on purpose: it
+    /// belongs to Stale, on the last-contact date and nowhere else.
     fileprivate var color: Color {
         switch self {
         case .pending, .moving: .blue
@@ -48,10 +50,12 @@ extension Tone {
     /// The shade: how strongly the capsule is filled, which is how far along
     /// the pipeline the row is.
     ///
-    /// Only the two blues differ — the pale/medium pair the contract asks for.
-    /// The rest sit at one weight, because their hues already tell them apart
-    /// and varying the fill as well would imply an ordering between grey and
-    /// green that the pipeline does not have.
+    /// Only the two blues differ, giving `applied` and `screening` the pale and
+    /// medium the contract names. The rest sit at one weight, `deep` included —
+    /// so the fills do not deepen along the pipeline, which is half of what #86
+    /// is open about. The other three hues already tell each other apart, and
+    /// varying their fills too would imply an ordering between grey and green
+    /// that the pipeline does not have.
     fileprivate var fill: Double {
         switch self {
         case .pending: 0.10

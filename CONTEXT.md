@@ -126,22 +126,14 @@ _Avoid_: Closed, finished, dead
 ### The chip
 
 **Tone**:
-How a Status is meant to read in the Status column's chip, named semantically
-rather than as a colour. A classification of Status alongside Standing, but a
-purely visual one: it decides appearance and nothing else, so no rule about
-staleness, filtering or Terminal is ever read off it. Two Statuses that share a
-Tone are saying they look alike, never that they behave alike. Because Tone
-names appearances, it borrows words this glossary tells you to avoid for a
-Standing — `pending` and `moving` are Tones, and say nothing about whose move
-it is.
-
-`SPEC.md` states the rule Tone is meant to encode as *"hue is the standing,
-shade is the distance along"*, and in the same breath names indigo for
-`interviewing`, which is a second hue inside one Standing. What ships today
-follows the second half of that sentence, not the first, and its shades do not
-deepen along the pipeline. **[#86](https://github.com/cannicombustiva/candido/issues/86)
-is open on which reading wins** — do not treat either as settled, here or in
-the code.
+How a Status reads in the Status column's chip, named as an appearance rather
+than as a colour. A classification of Status alongside Standing, but a purely
+visual one: it decides appearance and nothing else, so no rule about staleness,
+filtering or Terminal is ever read off it. Two Statuses sharing a Tone look
+alike and say nothing thereby about whose move it is — which is why `pending`,
+a word this glossary avoids for a Standing, is reused here for an appearance.
+Which hues and shades Tone should map to is unsettled; issue #86 decides it, and
+until it does neither this entry nor the code states a rule.
 _Avoid_: Style, theme, severity
 
 ### Leaving the store
