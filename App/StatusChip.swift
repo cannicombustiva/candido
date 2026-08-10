@@ -10,7 +10,8 @@ import SwiftUI
 ///
 /// Which tone a Status carries, and which tone is the pale one, are both
 /// `CandidoCore`'s decisions and are tested there. This view turns them into a
-/// `Color` and an opacity and decides nothing else.
+/// `Color` and an opacity; the only judgement it adds is how much fill each
+/// capsule needs to be told apart from its neighbours.
 struct StatusChip: View {
     let status: Status
 
@@ -56,7 +57,7 @@ extension Tone {
     /// `CandidoCore`'s decision and is tested there; this turns that decision
     /// into a number, and then makes one further choice of its own.
     ///
-    /// The standard weights are not a second shade step. They differ because a
+    /// The standard opacities are not a second shade step. They differ because a
     /// medium blue needs more fill to separate from a pale blue of the same hue
     /// than indigo, green or grey need from anything — a contrast problem, not
     /// a position in the pipeline. `SPEC.md` requires no difference between
