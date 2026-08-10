@@ -23,9 +23,9 @@ struct StatusToneTests {
     }
 
     /// Tone refines Standing — that is the whole reason the tones are worth
-    /// having. Which hue and shade a Tone renders as is a separate question,
-    /// and an open one (#86); this test is about the partition, not the
-    /// colours. It holds for every Status, including any added later: a new
+    /// having. Which colour a Tone renders as is a separate question, answered
+    /// by `SPEC.md`'s enumerated list; this test is about the partition, not
+    /// the colours. It holds for every Status, including any added later: a new
     /// Status that stands Over cannot be given a waiting tone, and one that
     /// awaits their reply cannot borrow the green that means the move is the
     /// owner's.
