@@ -4,14 +4,13 @@
 /// and it lives here where `swift test` reaches it. The app target turns a token
 /// into a `Color`.
 ///
-/// It does more than that today, and should not: how strongly each tone fills
-/// its capsule is decided in `App/StatusChip.swift`, out of reach of the tests.
-/// That is #87's first item, unblocked now that #86 is settled.
+/// The one shade relation the contract requires — `applied` paler than
+/// `screening` — is `Shade`, alongside. The view renders it as an opacity and
+/// chooses no part of it.
 ///
 /// The cases are declared in pipeline order. The order is documentation and
-/// nothing more — no shade relation is encoded here at all, not even the one
-/// the contract asks for between `applied` and `screening`. That relation is a
-/// fill weight in the view today, which is #87's first item.
+/// nothing more: no relation is read off it, and `Shade` is where the pale one
+/// is named.
 ///
 /// "Pending" is a word `CONTEXT.md` tells you to avoid for a Standing. It is
 /// reused here for an appearance, and naming a Tone is not naming a Standing —

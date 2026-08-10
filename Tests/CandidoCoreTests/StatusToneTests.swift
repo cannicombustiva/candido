@@ -22,6 +22,30 @@ struct StatusToneTests {
         #expect(status.tone == expected)
     }
 
+    /// The one shade relation `SPEC.md` requires: `applied` is a pale blue and
+    /// `screening` a medium blue of the same hue, so the chip for `applied`
+    /// must read paler than the chip for `screening`.
+    ///
+    /// This is the decision, not the rendering. How much paler — the opacity a
+    /// capsule ends up with — is the view's business and is not asserted here.
+    @Test
+    func appliedIsPalerThanScreening() {
+        #expect(Status.applied.tone.shade < Status.screening.tone.shade)
+    }
+
+    /// `applied` is the only Status the contract makes pale. Every other one
+    /// carries the same Shade, `interviewing` included — it is told apart by
+    /// its hue, not by being paler still. What opacity each ends up rendering
+    /// at is the view's business and is not what this asserts.
+    ///
+    /// This is the guard against re-encoding "shade is the distance along",
+    /// which `SPEC.md` no longer says and candido#86 settled against. A second
+    /// pale step added here would fail it.
+    @Test(arguments: Status.allCases.filter { $0 != .applied })
+    func nothingButAppliedIsPale(_ status: Status) {
+        #expect(status.tone.shade == .standard)
+    }
+
     /// Tone refines Standing — that is the whole reason the tones are worth
     /// having. Which colour a Tone renders as is a separate question, answered
     /// by `SPEC.md`'s enumerated list; this test is about the partition, not

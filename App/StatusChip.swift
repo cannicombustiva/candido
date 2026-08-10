@@ -8,11 +8,10 @@ import SwiftUI
 /// cannot separate these hues, and the column is a sort key — the text has to
 /// be there to be sorted by and read.
 ///
-/// Which tone a Status carries is `CandidoCore`'s decision. Turning a tone into
-/// a `Color` is this view's, and so — for now, wrongly — is how strongly each
-/// tone fills its capsule: that decision belongs in the package where the tests
-/// reach it, and moving it is #87's first item, unblocked now that #86 is
-/// settled.
+/// Which tone a Status carries, and which tone is the pale one, are both
+/// `CandidoCore`'s decisions and are tested there. This view turns them into a
+/// `Color` and an opacity; the only judgement it adds is how much fill each
+/// capsule needs to be told apart from its neighbours.
 struct StatusChip: View {
     let status: Status
 
@@ -54,20 +53,20 @@ extension Tone {
         }
     }
 
-    /// The shade: how strongly the capsule is filled.
+    /// How strongly the capsule is filled. Which tone is the pale one is
+    /// `CandidoCore`'s decision and is tested there; this turns that decision
+    /// into a number, and then makes one further choice of its own.
     ///
-    /// Only `pending` and `moving` differ, giving `applied` and `screening` the
-    /// pale and medium the contract names. Everything else sits at one weight,
-    /// `deep` included: `SPEC.md` asks for a shade difference between those two
-    /// and nowhere else, so the fills are not a pipeline ordering and must not
-    /// be read as one. The other hues already tell each other apart, and varying
-    /// their fills too would imply an ordering between grey and green that the
-    /// pipeline does not have.
+    /// The standard opacities are not a second shade step. They differ because a
+    /// medium blue needs more fill to separate from a pale blue of the same hue
+    /// than indigo, green or grey need from anything — a contrast problem, not
+    /// a position in the pipeline. `SPEC.md` requires no difference between
+    /// them and none should be read into these numbers.
     fileprivate var fill: Double {
-        switch self {
-        case .pending: 0.10
-        case .moving: 0.34
-        case .deep, .yours, .spent: 0.18
+        switch (shade, self) {
+        case (.pale, _): 0.10
+        case (.standard, .moving): 0.34
+        case (.standard, _): 0.18
         }
     }
 }
