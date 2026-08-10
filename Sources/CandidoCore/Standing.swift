@@ -2,10 +2,12 @@ import Foundation
 
 /// Whose move it is, and whether the Application is still in play.
 ///
-/// This is the only classification of Status in the package. Terminal, "awaits
-/// their reply" and the staleness threshold were three separate answers to the
-/// same question and could drift apart; here they are one switch, so a Status
-/// cannot be over and awaiting a reply at once.
+/// This is the classification of Status that behaviour is read off. `Tone` also
+/// classifies Status, but decides only what the chip looks like — nothing about
+/// staleness, filtering or Terminal comes from it. Terminal, "awaits their
+/// reply" and the staleness threshold were three separate answers to the same
+/// question and could drift apart; here they are one switch, so a Status cannot
+/// be over and awaiting a reply at once.
 ///
 /// The threshold rides on the case that has one. There is no "no threshold"
 /// state to encode as `nil`: a Status that is not awaiting their reply has no

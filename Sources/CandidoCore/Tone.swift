@@ -7,8 +7,12 @@
 ///
 /// The cases are ordered as the pipeline is, so the deepening of the three
 /// "awaits their reply" tones is visible in the type.
-public enum Tone: Equatable, Sendable, CaseIterable {
+public enum Tone: Equatable, Sendable {
     /// Applied for, nothing back yet. Palest of the waiting tones.
+    ///
+    /// "Pending" is a word `CONTEXT.md` tells you to avoid for a Standing. It
+    /// is borrowed here for a shade and means nothing about whose move it is —
+    /// see the glossary's Tone entry.
     case pending
 
     /// In screening — they have answered once.
