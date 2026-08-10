@@ -138,6 +138,16 @@ generalise: only `applied` and `screening` are required to differ by shade, and
 is a word this glossary avoids for a Standing, reused here for an appearance.
 _Avoid_: Style, theme, severity
 
+**Shade**:
+How pale a chip reads next to the others. The contract requires exactly one
+shade difference — `applied` paler than `screening`, the pale and medium blues
+— so Shade has two values and no more: pale, which is `applied` alone, and
+standard, which is everything else. Standard is the absence of a required
+difference, not a second point on a scale, and `interviewing` sits there
+because its hue tells it apart. How much paler pale renders is not Shade: that
+is an opacity, and it belongs to the view.
+_Avoid_: Depth, level, intensity, weight
+
 ### Leaving the store
 
 **Delete**:
