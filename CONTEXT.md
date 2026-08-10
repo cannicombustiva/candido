@@ -129,11 +129,13 @@ _Avoid_: Closed, finished, dead
 How a Status reads in the Status column's chip, named as an appearance rather
 than as a colour. A classification of Status alongside Standing, but a purely
 visual one: it decides appearance and nothing else, so no rule about staleness,
-filtering or Terminal is ever read off it. Two Statuses sharing a Tone look
-alike and say nothing thereby about whose move it is — which is why `pending`,
-a word this glossary avoids for a Standing, is reused here for an appearance.
-Which hues and shades Tone should map to is unsettled; issue #86 decides it, and
-until it does neither this entry nor the code states a rule.
+filtering or Terminal is ever read off it. It refines Standing rather than
+cutting across it — every Tone belongs to exactly one Standing, so two Statuses
+sharing a Tone always share a Standing, and that much is tested. What is not
+settled is which hues and shades the Tones should map to; issue #86 decides
+that, and until it does neither this entry nor the code states a rule for it.
+`pending` is a word this glossary avoids for a Standing, reused here for an
+appearance.
 _Avoid_: Style, theme, severity
 
 ### Leaving the store
