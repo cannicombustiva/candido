@@ -22,13 +22,6 @@ struct StatusToneTests {
         #expect(status.tone == expected)
     }
 
-    /// Tone refines Standing — that is the whole reason the tones are worth
-    /// having. Which colour a Tone renders as is a separate question, answered
-    /// by `SPEC.md`'s enumerated list; this test is about the partition, not
-    /// the colours. It holds for every Status, including any added later: a new
-    /// Status that stands Over cannot be given a waiting tone, and one that
-    /// awaits their reply cannot borrow the green that means the move is the
-    /// owner's.
     /// The one shade relation `SPEC.md` requires: `applied` is a pale blue and
     /// `screening` a medium blue of the same hue, so the chip for `applied`
     /// must read paler than the chip for `screening`.
@@ -52,6 +45,13 @@ struct StatusToneTests {
         #expect(status.tone.shade == .standard)
     }
 
+    /// Tone refines Standing — that is the whole reason the tones are worth
+    /// having. Which colour a Tone renders as is a separate question, answered
+    /// by `SPEC.md`'s enumerated list; this test is about the partition, not
+    /// the colours. It holds for every Status, including any added later: a new
+    /// Status that stands Over cannot be given a waiting tone, and one that
+    /// awaits their reply cannot borrow the green that means the move is the
+    /// owner's.
     @Test(arguments: Status.allCases)
     func toneAgreesWithStanding(_ status: Status) {
         switch status.standing {

@@ -62,13 +62,10 @@ extension Tone {
     /// a position in the pipeline. `SPEC.md` requires no difference between
     /// them and none should be read into these numbers.
     fileprivate var fill: Double {
-        switch shade {
-        case .pale: 0.10
-        case .standard:
-            switch self {
-            case .moving: 0.34
-            case .pending, .deep, .yours, .spent: 0.18
-            }
+        switch (shade, self) {
+        case (.pale, _): 0.10
+        case (.standard, .moving): 0.34
+        case (.standard, _): 0.18
         }
     }
 }

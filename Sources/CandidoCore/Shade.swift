@@ -11,6 +11,11 @@
 /// view's: how much paler a pale chip renders is a question about contrast on a
 /// particular capsule, and answering it here would pull rendering into the
 /// package.
+/// `Comparable` is safe only while there are two cases: `pale < standard` is
+/// then the single required relation and nothing more. A third case would make
+/// the declaration order load-bearing and turn this into the scale the contract
+/// does not have — so if one is ever needed, drop `Comparable` first and make
+/// the tests say which pairs differ.
 public enum Shade: Comparable, Sendable {
     /// The paler of the two. `applied` only.
     case pale
