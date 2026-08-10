@@ -16,6 +16,14 @@ jobtracker-backup*.json
 /*.json
 !/skills-lock.json
 
+# Credentials. Nothing in the app reads a .env — this guards the agent skills,
+# which do: a wizard generated from .agents/skills/wizard writes the keys it
+# captures straight to one. Same reason as the backups above, and the same
+# stakes: this repo is public.
+.env
+.env.*
+!.env.example
+
 # Scratch space for local-markdown notes and throwaway prototypes
 .scratch/
 
