@@ -12,8 +12,8 @@
 /// No shade ordering is asserted here, because none is settled — see #86.
 ///
 /// "Pending" is a word `CONTEXT.md` tells you to avoid for a Standing. It is
-/// reused here for an appearance and says nothing about whose move it is — see
-/// the glossary's Tone entry.
+/// reused here for an appearance, and naming a Tone is not naming a Standing —
+/// see the glossary's Tone entry.
 public enum Tone: Equatable, Sendable {
     /// Applied for, nothing back yet. The first of the waiting tones.
     case pending
