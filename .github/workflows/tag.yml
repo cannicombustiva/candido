@@ -1,0 +1,109 @@
+name: Tag
+
+# Nobody decides when to release. A merged pull request's labels do.
+#
+# `closed` rather than `merged` because there is no merged event: closing is the
+# event, and whether it merged is a field on the payload. Taking it this way puts
+# the labels in the payload too, so the bump needs no API lookup.
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+
+# One slot, and it does not cancel. Two pull requests merged a minute apart would
+# otherwise both read the same latest tag, compute the same next version, and the
+# second push would fail — the same reasoning release.yml records for why
+# releases are not interchangeable the way CI runs are. The group is a constant,
+# not keyed on the ref, because every merge computes against the same tag list.
+concurrency:
+  group: tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Work out the next version and tag it
+    if: github.event.pull_request.merged == true
+    # Linux, not macOS: this job computes a string and pushes a ref. The build
+    # happens in release.yml, which needs a Mac; this does not.
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.next.outputs.version }}
+
+    steps:
+      # fetch-depth: 0 for the tags. Without them the latest version reads as
+      # none and every merge would compute 0.1.0 afresh.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Work out the next version
+        id: next
+        env:
+          # A JSON array of the labels on the merged pull request, straight from
+          # the event payload.
+          LABELS_JSON: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -euo pipefail
+
+          # --sort=-v:refname orders by version rather than lexically, so v0.10.0
+          # comes after v0.9.0 rather than before it.
+          latest=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          if [ -z "${latest}" ]; then
+            # No tags at all: nothing has shipped, so the next release counts up
+            # from zero.
+            current="0.0.0"
+          elif ! current=$(scripts/version.sh from-tag "${latest}" 2>/tmp/version-error); then
+            echo "::error::latest tag: $(cat /tmp/version-error)"
+            exit 1
+          fi
+
+          # Rebuilt as positional parameters so a label is one argument whatever
+          # it contains.
+          set --
+          while IFS= read -r label; do
+            if [ -n "${label}" ]; then
+              set -- "$@" "${label}"
+            fi
+          done <<EOF
+          $(printf '%s' "${LABELS_JSON}" | jq -r '.[]')
+          EOF
+
+          next=$(scripts/version.sh next "${current}" "$@")
+          if [ -z "${next}" ]; then
+            # The normal outcome. Docs, chores, tests, an unlabelled pull
+            # request and anything wearing no-release all land here, and land
+            # here quietly — no tag, no release, no wasted build.
+            echo "labels [$*] cut no release; staying at ${current}"
+            exit 0
+          fi
+
+          echo "version=${next}" >> "$GITHUB_OUTPUT"
+          echo "labels [$*] take ${current} to ${next}"
+
+      - name: Push the tag
+        if: steps.next.outputs.version != ''
+        env:
+          VERSION: ${{ steps.next.outputs.version }}
+        run: |
+          set -euo pipefail
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+
+  # Called, not left to trigger. GitHub suppresses workflow triggers for events
+  # raised by the default token, to prevent loops — so the tag pushed above will
+  # not start release.yml on its own, and the failure would be silent: a tag in
+  # the repo, no release behind it, nothing in any log. Calling it needs no
+  # personal access token and nothing that expires.
+  release:
+    name: Release
+    needs: tag
+    if: needs.tag.outputs.version != ''
+    uses: ./.github/workflows/release.yml
+    with:
+      version: ${{ needs.tag.outputs.version }}
+    permissions:
+      contents: write

@@ -189,3 +189,24 @@ can go Stale.
 
 **All**:
 Every Application, Active and Archived alike.
+
+### Shipping
+
+Three words for three different things, used interchangeably until they were
+written down here.
+
+**Tag**:
+`vX.Y.Z` fixed to one commit. It is both what starts a Release and where the
+number comes from — nothing else starts one.
+_Avoid_: Version tag, label, marker
+
+**Release**:
+The published build and its `Candido.dmg`, which is what a person downloads.
+One Release per Tag.
+_Avoid_: Build, ship, drop, cut
+
+**Version**:
+The number the app carries and shows in its About box. Always the Tag without
+its leading `v`, so **a Version never exists without a Tag** — there is no such
+thing as a released build whose number was typed by hand.
+_Avoid_: Build number, revision, release number

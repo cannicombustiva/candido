@@ -1,17 +1,27 @@
 name: Release
 
-# One workflow, two triggers — not two workflows. workflow_dispatch builds,
-# packages and verifies by the same steps a tag push does, but uploads the dmg
-# as a workflow artifact instead of publishing a release, so the tag path is
-# exercisable without minting a tag.
+# One workflow, three ways in — not three workflows. A pushed tag publishes; the
+# tagger calls this with a version it has already computed and pushed a tag for;
+# workflow_dispatch rehearses. All three run the same steps: the same tests, the
+# same Release build, the same packaging and every assertion below.
 #
-# The one deliberate difference is the version: a dry run has no tag to read one
-# from, so it builds 0.0.0. Everything else — the build, the packaging and every
-# assertion below — is the same code on both paths.
+# The one deliberate difference is the version. A dry run has no tag to read one
+# from, so it builds 0.0.0 — "0.0.0-dryrun" is not a valid marketing version and
+# would build a bundle unlike the one a tag push produces, defeating the point of
+# the rehearsal.
+#
+# The dry run is kept precisely because releases are now automatic: a broken edit
+# to this file would otherwise be discovered by a real Release failing.
 on:
   push:
     tags:
       - "v*"
+  workflow_call:
+    inputs:
+      version:
+        description: The version to build and publish, without a leading v
+        required: true
+        type: string
   workflow_dispatch:
 
 permissions:
@@ -38,32 +48,52 @@ jobs:
       - name: Report toolchain
         run: xcodebuild -version
 
-      # Publishing is gated on `github.event_name == 'push'`, not on ref_type
-      # alone: workflow_dispatch's ref picker offers tags, so a dry run can be
-      # started from a tag ref and would otherwise take the publish path.
+      # Which event fired and whether there is a tag to read are this workflow's
+      # to know. What a tag means is not: scripts/version.sh owns that decision
+      # and is table-tested in CI, so the number is computed in one place rather
+      # than in two that can drift.
+      #
+      # The steps below gate on this step's `publish` output rather than on
+      # github.event_name, and they have to. On a workflow_call the context is
+      # the *caller's* event — event_name reads `pull_request` and
+      # GITHUB_REF_NAME reads a branch — so an event_name check would upload an
+      # artifact and publish nothing, silently. It also covers the older trap:
+      # workflow_dispatch's ref picker offers tags, so a dry run can be started
+      # from a tag ref and must still not publish.
       - name: Work out the version
         id: version
+        env:
+          CALLED_VERSION: ${{ inputs.version || '' }}
         run: |
           set -euo pipefail
-          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+          if [ -n "${CALLED_VERSION}" ]; then
+            # The tagger has already computed this and pushed the matching tag.
+            version="${CALLED_VERSION}"
+            tag="v${version}"
+            publish=true
+          elif [ "${GITHUB_EVENT_NAME}" = "push" ]; then
             tag="${GITHUB_REF_NAME}"
-            # CFBundleShortVersionString is up to three period-separated
-            # integers. A tag that does not reduce to one would otherwise be
-            # discovered by Finder showing a blank version, after publishing.
-            if ! printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-              echo "::error::tag ${tag} is not vMAJOR.MINOR.PATCH"
+            # A malformed tag fails here, before anything is built. The script
+            # explains itself on stderr; re-raising that as an annotation keeps
+            # the message where a person will see it.
+            if ! version=$(scripts/version.sh from-tag "${tag}" 2>/tmp/version-error); then
+              echo "::error::$(cat /tmp/version-error)"
               exit 1
             fi
-            version="${tag#v}"
+            publish=true
+          else
+            version="0.0.0"
+            tag=""
+            publish=false
+          fi
+          if [ "${publish}" = "true" ]; then
             label="${version}"
           else
-            # No tag to read a version from. 0.0.0 is a valid marketing version
-            # — "0.0.0-dryrun" is not, and would build a bundle unlike the one
-            # a tag push produces, defeating the point of the rehearsal.
-            version="0.0.0"
             label="0.0.0-dryrun"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "publish=${publish}" >> "$GITHUB_OUTPUT"
           echo "label=${label}" >> "$GITHUB_OUTPUT"
           echo "Building version ${version} (${label})"
 
@@ -175,7 +205,7 @@ jobs:
 
       # Dry run: no release, just something to download and open by hand.
       - name: Upload the dmg as an artifact
-        if: github.event_name != 'push'
+        if: steps.version.outputs.publish != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: Candido-dmg-${{ steps.version.outputs.label }}
@@ -185,13 +215,18 @@ jobs:
       # The asset name is never versioned. The README's download button points
       # at /releases/latest/download/Candido.dmg, which only resolves against a
       # stable asset name.
+      #
+      # The tag comes from the version step, not from GITHUB_REF_NAME: on the
+      # called path the ref is the caller's branch, and releasing against that
+      # would name the release after main.
       - name: Publish the release
-        if: github.event_name == 'push'
+        if: steps.version.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          gh release create "${GITHUB_REF_NAME}" \
+          gh release create "${TAG}" \
             Candido.dmg \
-            --title "${GITHUB_REF_NAME}" \
+            --title "${TAG}" \
             --generate-notes

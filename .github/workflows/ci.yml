@@ -38,8 +38,16 @@ jobs:
           xcodebuild -version
           swift --version
 
+      # The version rules decide what a merge ships as, and they are a table,
+      # so they are tested as one. First because it costs a second and needs no
+      # toolchain — and here rather than in the release workflow so a rule
+      # broken by a later edit fails on the pull request that broke it rather
+      # than on a Release.
+      - name: Version rules
+        run: bash scripts/version-test.sh
+
       # CandidoCore holds everything with a decision in it, so this is the
-      # cheap check and it runs first.
+      # cheap check and it runs next.
       - name: swift test
         run: swift test
 
