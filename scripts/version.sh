@@ -106,12 +106,16 @@ cmd_from_tag() {
   # both means no caller has to remember which it is holding.
   tag="${ref#refs/tags/}"
 
-  # CFBundleShortVersionString is up to three period-separated integers, so a
-  # tag that does not reduce to one has no Version. Caught here rather than by
-  # Finder showing a blank version after the dmg was published.
-  if [[ ! $tag =~ ^v$component\.$component\.$component$ ]]; then
-    die "tag ${ref:-(empty)} is not vMAJOR.MINOR.PATCH"
-  fi
+  # The leading v is this half's whole job; what follows it is a version like
+  # any other, so the same parse decides it. CFBundleShortVersionString is up to
+  # three period-separated integers, so a tag that does not reduce to one has no
+  # Version — caught here rather than by Finder showing a blank version after
+  # the dmg was published.
+  case "$tag" in
+    v*) : ;;
+    *) die "tag ${ref:-(empty)} is not vMAJOR.MINOR.PATCH" ;;
+  esac
+  parse_version "${tag#v}" "tag ${ref} is not vMAJOR.MINOR.PATCH"
 
   printf '%s\n' "${tag#v}"
 }

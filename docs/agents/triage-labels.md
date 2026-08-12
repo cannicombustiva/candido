@@ -43,7 +43,8 @@ else".**
 | `no-release` | Everything else              | no release | Holding a merge back from shipping — see below |
 
 **Apply exactly one when you open a PR.** Two labels put the same PR under two
-headings.
+headings. The one exception is `no-release`, which is worn alongside the label
+describing the work rather than instead of it.
 
 ## Applying one of these now ships something
 

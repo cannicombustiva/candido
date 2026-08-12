@@ -18,6 +18,12 @@ permissions:
 # second push would fail — the same reasoning release.yml records for why
 # releases are not interchangeable the way CI runs are. The group is a constant,
 # not keyed on the ref, because every merge computes against the same tag list.
+#
+# The known edge is three: GitHub holds one pending run per group, so a third
+# merge arriving while one runs and one waits evicts the waiting one, and that
+# merge cuts no release. It rides along in the next one instead. Three merges
+# inside a single release build is not a pace this repo has ever reached, and
+# the alternative — a queue of our own — is more machinery than the miss costs.
 concurrency:
   group: tag
   cancel-in-progress: false

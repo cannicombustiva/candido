@@ -43,7 +43,14 @@ jobs:
     runs-on: macos-26
 
     steps:
+      # The tag, explicitly, on the called path. Left to its default, checkout
+      # takes the *caller's* ref — for a merged pull request that is a merge
+      # ref, not the tag the tagger has just pushed — and the dmg inside the
+      # release would then be built from a different commit than the release
+      # names. The push and dispatch paths pass nothing and keep the default.
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.version && format('refs/tags/v{0}', inputs.version) || '' }}
 
       - name: Report toolchain
         run: xcodebuild -version
