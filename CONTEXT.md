@@ -5,8 +5,18 @@ ones that have gone quiet. `SPEC.md` is the contract; this file is the glossary.
 
 ## Where we are
 
-**Current milestone: M5** — `/code-review` and `/security-review`: does the
-reviewer catch what the owner cannot?
+**Current milestone: M6** — `/loop` or a scheduled agent: background
+maintenance and dependency bumps.
+
+M5 closed on 2026-09-02, scored in `../jobtracker-yardstick/scores/m5.md`: 3/3
+on Tier A and 61/61 on Tier D, Tier U unscored as always. Its question — do the
+reviewers catch what the owner cannot? — is **left open there on purpose**. One
+two-axis review ran, on #99, and of its five findings three were hazards the
+issue had already named to the reviewers; the two that were not are a redundant
+save no test could see and a sort-direction claim that was wrong in the issue
+and in an ADR before the reviewer read it back. `/security-review` was never
+run. The material is in that repo's `evidence/m5/`; the judgement is the
+owner's and nobody has made it.
 
 M4 closed as a **negative result**. Parallel subagents on independent tracks cost
 more coordination than they returned for a solo owner, so the worktree machinery
