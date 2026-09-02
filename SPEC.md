@@ -86,7 +86,7 @@ never deletes — the store can only grow.
 | `title` | `String` | Free text. Surrounding whitespace is trimmed; nothing else is normalized — no case-folding, no collapsing of interior spaces, no deduplication, no entity. Titles are too messy to be worth one |
 | `status` | `Status` | See below |
 | `appliedDate` | `Date` | Set once, never changes |
-| `lastContactDate` | `Date` | Resets whenever either side makes contact. Drives staleness |
+| `lastContactDate` | `Date` | Resets whenever either side makes contact, and a status change is contact — see below. Drives staleness |
 | `jobURL` | `URL?` | Postings vanish; I want to reread the JD before a call |
 | `notes` | `String` | Free text |
 
@@ -102,6 +102,41 @@ notions of "needs attention" is one too many).
 ### Statuses
 
 `applied` · `screening` · `interviewing` · `offer` · `rejected` · `withdrawn`
+
+### Changing a status is contact
+
+Moving a row's status sets `lastContactDate` to today. Nearly every status
+change happens because they wrote to me — a rejection, an invitation to screen,
+an offer — and the date I care about is the date of that letter, not the date I
+last remembered to touch the field.
+
+**Except into `withdrawn`.** Withdrawing is my act alone. Nobody contacted
+anybody, so nothing about the last contact changed. Moving *out* of `withdrawn`
+stamps like any other change: something brought the pursuit back, and that
+something came from them. A row revived after six months must not read as stale
+the instant I revive it.
+
+**The stamp is a default, not a lock.** The date picker sits under the status
+picker in the inspector and still wins. I learn on Thursday that the rejection
+came on Monday, and I drag it back — without that, this would make the date less
+accurate than typing it by hand. Re-selecting the status a row already has is
+not a change and does nothing.
+
+**Only a change to an existing row stamps.** Creating an application does not:
+`lastContactDate` still defaults to the applied date, because something sent 60
+days ago has been silent for 60 days whatever status I file it under. Importing
+a backup does not either — a round-trip through the JSON file that aged every
+row to today would leave me with a backup that is not one.
+
+Today here is the same today staleness derives against: a calendar day in my
+local timezone. No time of day is stored, because no rule reads one.
+
+A `rejected` row therefore carries the day I marked it, which is the day they
+sent it. The last-contact column sorts oldest first, so such a row moves to the
+end of it — either way the archived order is when I dealt with a row, not when I
+first wrote. That is the answer I want from an archived row.
+
+See `docs/adr/0007-a-status-change-is-contact.md`.
 
 ### Staleness is derived, never stored
 
