@@ -105,12 +105,19 @@ import Testing
 
     /// An application sent 60 days ago has been silent for 60 days. Stamping
     /// today onto it would make a backdated row read as freshly contacted.
-    @Test func treatsTheAppliedDateAsTheLastContactUnlessToldOtherwise() throws {
+    ///
+    /// True whatever Status it is filed under: creating is not changing, and
+    /// only a Status *change* on an existing row is Contact. Filing an old
+    /// rejection must not claim they wrote today.
+    @Test(arguments: Status.allCases)
+    func treatsTheAppliedDateAsTheLastContactUnlessToldOtherwise(
+        status: Status
+    ) throws {
         let sixtyDaysAgo = TestClock.date(daysAgo: 60)
 
         let application = try Application.create(
-            companyNamed: "Spotify", title: "iOS Engineer", appliedDate: sixtyDaysAgo,
-            in: context)
+            companyNamed: "Spotify", title: "iOS Engineer", status: status,
+            appliedDate: sixtyDaysAgo, in: context)
 
         #expect(application.lastContactDate == sixtyDaysAgo)
     }

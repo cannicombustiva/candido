@@ -10,15 +10,23 @@ import SwiftUI
 /// applied date is set once, and a Company is never managed directly.
 ///
 /// This is also where an Application becomes Archived (by taking a Terminal
-/// Status) and where staleness is cleared (by moving the last-contact date).
-/// Neither is a separate act.
+/// Status) and where staleness is cleared — either by moving the last-contact
+/// date, or by changing the Status, which is Contact and moves that date with
+/// it. Neither archiving nor clearing is a separate act.
 struct ApplicationInspector: View {
     @Environment(\.modelContext) private var context
 
-    /// `@Bindable` because Status, the last-contact date and notes have no
-    /// rules of their own: they are bound straight to the model, so the table
-    /// row restyles as the field changes, with no reselect.
+    /// `@Bindable` because the last-contact date and notes have no rules of
+    /// their own: they are bound straight to the model, so the table row
+    /// restyles as the field changes, with no reselect. Status is bound
+    /// through `statusSelection` below — it does have a rule.
     @Bindable var application: Application
+
+    /// The day this window is deriving against, from the window's one
+    /// `DayClock`. A Status change stamps the last-contact date with it, so the
+    /// stamp and the staleness the table styles against cannot disagree about
+    /// what day it is — not by agreement, but because there is one value.
+    let today: Today
 
     /// Title and URL are held as text first. The package decides what a typed
     /// title or a pasted link becomes, and refuses some of them — so the field
@@ -35,8 +43,9 @@ struct ApplicationInspector: View {
 
     @State private var isRenaming = false
 
-    init(application: Application) {
+    init(application: Application, today: Today) {
         self.application = application
+        self.today = today
         _titleText = State(initialValue: application.title)
         _jobURLText = State(initialValue: application.jobURLText)
     }
@@ -63,12 +72,11 @@ struct ApplicationInspector: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Picker("Status", selection: $application.status) {
+                Picker("Status", selection: statusSelection) {
                     ForEach(Status.allCases, id: \.self) { status in
                         Text(status.displayName).tag(status)
                     }
                 }
-                .onChange(of: application.status) { save() }
             }
 
             Section {
@@ -78,10 +86,9 @@ struct ApplicationInspector: View {
 
                 DatePicker(
                     "Last contact",
-                    selection: $application.lastContactDate,
+                    selection: lastContactSelection,
                     displayedComponents: .date
                 )
-                .onChange(of: application.lastContactDate) { save() }
             }
 
             Section {
@@ -124,6 +131,39 @@ struct ApplicationInspector: View {
         .sheet(isPresented: $isRenaming) {
             CompanyRenameSheet(company: application.company)
         }
+    }
+
+    /// The Status picker, routed through the act rather than bound to the
+    /// field.
+    ///
+    /// A Status change is Contact, and what that means lives in `CandidoCore`
+    /// where `swift test` can reach it — the picker only has to call it. The
+    /// date field below keeps its direct binding on purpose: overriding the
+    /// stamp is the point of it.
+    private var statusSelection: Binding<Status> {
+        Binding(
+            get: { application.status },
+            set: { newStatus in
+                application.changeStatus(to: newStatus, asOf: today)
+                save()
+            }
+        )
+    }
+
+    /// The last-contact date, saved when the owner moves it.
+    ///
+    /// Bound through a setter rather than watched with `onChange`, because a
+    /// Status change writes this field too: watching it would save a second
+    /// time for one edit. Correcting the stamped date is still the point of
+    /// this field — it writes the model directly, exactly as before.
+    private var lastContactSelection: Binding<Date> {
+        Binding(
+            get: { application.lastContactDate },
+            set: { newDate in
+                application.lastContactDate = newDate
+                save()
+            }
+        )
     }
 
     private func commitTitle() {
