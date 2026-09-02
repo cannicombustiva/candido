@@ -86,10 +86,9 @@ struct ApplicationInspector: View {
 
                 DatePicker(
                     "Last contact",
-                    selection: $application.lastContactDate,
+                    selection: lastContactSelection,
                     displayedComponents: .date
                 )
-                .onChange(of: application.lastContactDate) { save() }
             }
 
             Section {
@@ -146,6 +145,22 @@ struct ApplicationInspector: View {
             get: { application.status },
             set: { newStatus in
                 application.changeStatus(to: newStatus, asOf: today)
+                save()
+            }
+        )
+    }
+
+    /// The last-contact date, saved when the owner moves it.
+    ///
+    /// Bound through a setter rather than watched with `onChange`, because a
+    /// Status change writes this field too: watching it would save a second
+    /// time for one edit. Correcting the stamped date is still the point of
+    /// this field — it writes the model directly, exactly as before.
+    private var lastContactSelection: Binding<Date> {
+        Binding(
+            get: { application.lastContactDate },
+            set: { newDate in
+                application.lastContactDate = newDate
                 save()
             }
         )

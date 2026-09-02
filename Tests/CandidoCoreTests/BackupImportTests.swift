@@ -75,6 +75,27 @@ struct BackupImportTests {
         #expect(existing.status == .offer)
     }
 
+    /// Restoring is not changing. An import sets a Status while putting a
+    /// record back, and that is not Contact — a restore that stamped would age
+    /// every row in the file to today and leave the owner holding a backup
+    /// that is not one.
+    @Test("A Status arriving from a file does not stamp the last contact")
+    func aStatusRestoredFromAFileDoesNotStampTheLastContact() throws {
+        let store = try TestStore()
+        let existing = try store.application(status: .applied, silentFor: 40)
+        let file = BackupSnapshot(companies: [
+            .init(
+                name: "Spotify",
+                applications: [.stub(id: existing.id, status: .interviewing, silentFor: 40)]
+            )
+        ])
+
+        try file.merge(into: store.context)
+
+        #expect(existing.status == .interviewing)
+        #expect(existing.lastContactDate == TestClock.date(daysAgo: 40))
+    }
+
     @Test("The day an Application was sent is never rewritten by a file")
     func keepsTheAppliedDateOfAKnownApplication() throws {
         let store = try TestStore()

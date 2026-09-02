@@ -16,7 +16,7 @@ extension Application {
     /// A Status change is Contact. Nearly every one of them happens because
     /// they wrote — a rejection, an invitation to screen, an offer — and the
     /// date the owner cares about is the date of that letter, not the date
-    /// they last remembered to touch the field. Leaving the two to be
+    /// they last remembered to edit the field. Leaving the two to be
     /// maintained separately is what makes a row that was answered this
     /// morning read as Stale.
     ///

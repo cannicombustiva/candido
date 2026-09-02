@@ -32,10 +32,11 @@ that is wrong but invisible is still wrong — and for `rejected` the stamp is
 simply true, since their rejection *was* the last contact.
 
 That has a visible consequence, and it is intended rather than tolerated: the
-Archived view, sorted by Last contact, lists rows in the order the owner
-processed them. For a dead row that is the better answer. The question a person
-asks of an archived Application is when they last heard, not when they first
-wrote.
+Archived view, sorted by Last contact, orders rows by when the owner processed
+them rather than by when the pursuit began. The column sorts oldest first by
+default, so a row marked `rejected` today moves to the *end* of it. For a dead
+row that is the better answer either way. The question a person asks of an
+archived Application is when they last heard, not when they first wrote.
 
 **Assigning a Status is not changing one.** This is the load-bearing half of the
 decision, and the reason the rule is one named act in `CandidoCore` rather than
