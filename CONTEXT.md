@@ -78,6 +78,22 @@ instant is two different days in two timezones, so an instant alone does not
 name a day.
 _Avoid_: Now, current date, clock
 
+**Last contact**:
+The day an Application last heard anything, from either side. Everything about
+attention counts from it: Days of silence is measured to it, and Stale is that
+count against what the Status tolerates. It is a day, not a moment — no rule
+reads a time of day, so none is kept.
+_Avoid_: Last activity, last touched, last updated
+
+**Contact**:
+Something passing between the owner and a Company that resets Last contact.
+A Status change is Contact — nearly every one happens because they wrote —
+except into `withdrawn`, which is the owner's act alone and tells nobody
+anything. Leaving `withdrawn` is Contact like any other change. Creating an
+Application is not Contact, and neither is an Import: both are records being
+made or restored rather than something happening.
+_Avoid_: Touch, activity, interaction, update
+
 **Days of silence**:
 The count of calendar days, in the owner's local timezone, between the last
 contact and today. Not elapsed hours — time of day never affects whether an

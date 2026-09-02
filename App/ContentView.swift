@@ -52,7 +52,8 @@ struct ContentView: View {
                 if let selectedApplication {
                     // Keyed on the row: the inspector holds the title and URL
                     // as text, and that text belongs to one Application.
-                    ApplicationInspector(application: selectedApplication)
+                    ApplicationInspector(
+                        application: selectedApplication, today: day.today)
                         .id(selectedApplication.id)
                 } else {
                     ContentUnavailableView(

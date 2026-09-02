@@ -115,6 +115,22 @@ import Testing
         #expect(application.lastContactDate == sixtyDaysAgo)
     }
 
+    /// Creating is not changing. Filing an old rejection sets a Status other
+    /// than `applied` at construction, and that must not claim they wrote
+    /// today — only a Status *change* on an existing row is Contact.
+    @Test(arguments: [Status.screening, .interviewing, .offer, .rejected, .withdrawn])
+    func treatsTheAppliedDateAsTheLastContactWhateverTheStatus(
+        status: Status
+    ) throws {
+        let sixtyDaysAgo = TestClock.date(daysAgo: 60)
+
+        let application = try Application.create(
+            companyNamed: "Spotify", title: "iOS Engineer", status: status,
+            appliedDate: sixtyDaysAgo, in: context)
+
+        #expect(application.lastContactDate == sixtyDaysAgo)
+    }
+
     @Test func keepsAnExplicitLastContactDate() throws {
         let applied = TestClock.date(daysAgo: 60)
         let replied = TestClock.date(daysAgo: 2)
